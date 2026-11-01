@@ -26,15 +26,13 @@ ARG USERNAME
 # Switch user to given USERNAME otherwise Ansible will be installed as root.
 USER ${USERNAME}
 ENV PATH=$PATH:/home/${USERNAME}/.local/bin
-# Install Ansible AVD collection.
-# RUN pip install "pyavd[ansible] @ ${PYAVD_INSTALL_LOCATION}" \
-#     && ansible-galaxy collection install ${ANSIBLE_INSTALL_LOCATION} \
-#     # install community.general to support callback plugins in ansible.cfg, etc.
-#     && ansible-galaxy collection install community.general
 
 RUN pip install --no-cache-dir "pyavd[ansible] @ ${PYAVD_INSTALL_LOCATION}" \
     && ansible-galaxy collection install ${ANSIBLE_INSTALL_LOCATION} \
     # install community.general to support callback plugins in ansible.cfg, etc.
     && ansible-galaxy collection install community.general \
     && pip install --no-cache-dir --upgrade certifi \
-    && rm -rf ~/.ansible/collections/ansible_collections/*/*/tests
+    && rm -rf ~/.cache ~/.ansible/galaxy_cache \
+        ~/.ansible/collections/ansible_collections/*/*/tests \
+        ~/.local/lib/python3*/site-packages/ansible_test \
+        ~/.local/bin/ansible-test

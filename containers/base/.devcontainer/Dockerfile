@@ -37,7 +37,7 @@ RUN apt-get update \
     git \
     # xz-utils required for docker import to work
     xz-utils \
-    && pip install --no-cache-dir --upgrade pip \
+    && PYTHONDONTWRITEBYTECODE=1 pip install --no-cache-dir --no-compile --upgrade pip \
     && rm -rf /var/lib/apt/lists/* \
     && rm -Rf /usr/share/doc && rm -Rf /usr/share/man \
     && apt-get clean
