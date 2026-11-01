@@ -31,9 +31,8 @@ LABEL org.opencontainers.image.vendor="Arista Networks"
 
 # Install essential tools.
 RUN printf 'path-exclude=/usr/lib/*/libicu*\n' > /etc/dpkg/dpkg.cfg.d/no-icu \
-    apt-get update \
+    && apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get upgrade -y --no-install-recommends \
-    && apt-get install -y --no-install-recommends \
     make \
     git \
     # xz-utils required for docker import to work
