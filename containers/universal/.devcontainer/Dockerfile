@@ -11,7 +11,7 @@ ARG IMAGE_VERSION
 LABEL org.opencontainers.image.description="AVD universal image with pre-installed AVD collection. The image is still in preview and under active development."
 LABEL com.arista.license_terms="https://github.com/aristanetworks/avd/blob/devel/LICENSE"
 LABEL org.opencontainers.image.licenses="Apache-2.0"
-LABEL org.opencontainers.image.authors="Arista AVD Team <ansible@arista.com>"
+LABEL org.opencontainers.image.authors="Arista PS Daniel Della-Noce <daniel.dellanoce@arista.com>"
 LABEL org.opencontainers.image.url="https://github.com/orgs/aristanetworks/packages?repo_name=avd"
 LABEL org.opencontainers.image.documentation="https://avd.arista.com/"
 LABEL org.opencontainers.image.source="https://github.com/aristanetworks/avd/tree/devel/containers"
@@ -27,7 +27,14 @@ ARG USERNAME
 USER ${USERNAME}
 ENV PATH=$PATH:/home/${USERNAME}/.local/bin
 # Install Ansible AVD collection.
-RUN pip install "pyavd[ansible] @ ${PYAVD_INSTALL_LOCATION}" \
+# RUN pip install "pyavd[ansible] @ ${PYAVD_INSTALL_LOCATION}" \
+#     && ansible-galaxy collection install ${ANSIBLE_INSTALL_LOCATION} \
+#     # install community.general to support callback plugins in ansible.cfg, etc.
+#     && ansible-galaxy collection install community.general
+
+RUN pip install --no-cache-dir "pyavd[ansible] @ ${PYAVD_INSTALL_LOCATION}" \
     && ansible-galaxy collection install ${ANSIBLE_INSTALL_LOCATION} \
     # install community.general to support callback plugins in ansible.cfg, etc.
-    && ansible-galaxy collection install community.general
+    && ansible-galaxy collection install community.general \
+    && pip install --no-cache-dir --upgrade certifi \
+    && rm -rf ~/.ansible/collections/ansible_collections/*/*/tests

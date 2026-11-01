@@ -10,7 +10,7 @@ ARG IMAGE_VERSION
 LABEL org.opencontainers.image.description="AVD base image. This image MUST NOT be used directly and is only required to optimize build process for other images."
 LABEL com.arista.license_terms="https://github.com/aristanetworks/avd/blob/devel/LICENSE"
 LABEL org.opencontainers.image.licenses="Apache-2.0"
-LABEL org.opencontainers.image.authors="Arista AVD Team <ansible@arista.com>"
+LABEL org.opencontainers.image.authors="Arista PS Daniel Della-Noce <daniel.dellanoce@arista.com>"
 LABEL org.opencontainers.image.url="https://github.com/orgs/aristanetworks/packages?repo_name=avd"
 LABEL org.opencontainers.image.documentation="https://avd.arista.com/"
 LABEL org.opencontainers.image.source="https://github.com/aristanetworks/avd/tree/devel/containers"
@@ -19,17 +19,30 @@ LABEL org.opencontainers.image.version=${IMAGE_VERSION}
 LABEL org.opencontainers.image.vendor="Arista Networks"
 
 # Install essential tools.
+# RUN apt-get update \
+#     && apt-get install -y --no-install-recommends \
+#     make \
+#     git \
+#     # xz-utils required for docker import to work
+#     xz-utils \
+#     && rm -rf /var/lib/apt/lists/* \
+#     && rm -Rf /usr/share/doc && rm -Rf /usr/share/man \
+#     && apt-get clean
+
+# Install essential tools.
 RUN apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get upgrade -y --no-install-recommends \
     && apt-get install -y --no-install-recommends \
     make \
     git \
     # xz-utils required for docker import to work
     xz-utils \
+    && pip install --no-cache-dir --upgrade pip \
     && rm -rf /var/lib/apt/lists/* \
     && rm -Rf /usr/share/doc && rm -Rf /usr/share/man \
     && apt-get clean
 
-# set ANSIBLE_CONFIG to ansible.cfg in local directory
+    # set ANSIBLE_CONFIG to ansible.cfg in local directory
 # this is required to address Ansible ignoring config in a world writable directory
 # on Codespaces, Gitlab Runner, etc.
 ENV ANSIBLE_CONFIG="ansible.cfg"
