@@ -13,7 +13,7 @@ LABEL org.opencontainers.image.description="AVD universal image with pre-install
 LABEL com.arista.license_terms="https://github.com/aristanetworks/avd/blob/devel/LICENSE"
 LABEL org.opencontainers.image.licenses="Apache-2.0"
 LABEL org.opencontainers.image.authors="Arista PS Daniel Della-Noce <daniel.dellanoce@arista.com>"
-LABEL org.opencontainers.image.url="https://github.com/orgs/aristanetworks/packages?repo_name=avd"
+LABEL org.opencontainers.image.url="https://github.com/ddella/avd-containers"
 LABEL org.opencontainers.image.documentation="https://avd.arista.com/"
 LABEL org.opencontainers.image.created=${RFC3339_TIMESTAMP}
 LABEL org.opencontainers.image.version=${IMAGE_VERSION}
@@ -76,8 +76,9 @@ USER avd
 RUN git clone --depth 1 https://github.com/ohmyzsh/ohmyzsh.git ~/.oh-my-zsh \
     && rm -rf ~/.oh-my-zsh/.git \
     && find ~/.oh-my-zsh/plugins -mindepth 1 -maxdepth 1 ! -name git -exec rm -rf {} + \
-    && printf '%s\n' 'export ZSH="$HOME/.oh-my-zsh"' 'ZSH_THEME="robbyrussell"' 'plugins=(git)' \
+    && printf '%s\n' 'export ZSH="$HOME/.oh-my-zsh"' 'ZSH_THEME="devcontainers"' 'plugins=(git)' \
         "zstyle ':omz:update' mode disabled" 'source $ZSH/oh-my-zsh.sh' > ~/.zshrc \
+    && echo 'source $HOME/.profile' > ~/.zprofile \
     && pip install --no-cache-dir "pyavd[ansible] @ git+https://github.com/aristanetworks/avd.git@${AVD_VERSION}#subdirectory=python-avd" \
     && ansible-galaxy collection install "git+https://github.com/aristanetworks/avd.git#/ansible_collections/arista/avd/,${AVD_VERSION}" \
     && pip install --no-cache-dir --upgrade certifi \
@@ -85,6 +86,9 @@ RUN git clone --depth 1 https://github.com/ohmyzsh/ohmyzsh.git ~/.oh-my-zsh \
         ~/.ansible/collections/ansible_collections/*/*/tests \
         ~/.local/lib/python3*/site-packages/ansible_test \
         ~/.local/bin/ansible-test
+
+# Add the prompt theme from the devcontainers common-utils feature.
+COPY --chown=avd:avd ./devcontainers.zsh-theme /home/avd/.oh-my-zsh/custom/themes/devcontainers.zsh-theme
 
 # Use ENTRYPOINT instead of CMD to ensure that entryscript is always executed.
 ENTRYPOINT [ "/bin/entrypoint.sh" ]
