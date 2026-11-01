@@ -73,7 +73,8 @@ jobs:
       - name: Build base image 🔨
         env:
           FROM_IMAGE: python
-          FROM_VARIANT: ${{ inputs.python_version }}-slim-bookworm
+          # FROM_VARIANT: ${{ inputs.python_version }}-slim-bookworm
+          FROM_VARIANT: ${{ inputs.python_version }}-slim-trixie
           IMAGE_VERSION: python${{ inputs.python_version }}
         run: |
           devcontainer build \
