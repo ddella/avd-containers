@@ -1,0 +1,126 @@
+---
+# Builds the universal image for amd64 and arm64 on native runners (no QEMU).
+# The base image is built on each runner and only used locally by the universal build.
+# The branch selected when starting the workflow is the AVD code installed in the image.
+
+name: Build universal container (native runners)
+
+"on":
+  workflow_dispatch:
+    inputs:
+      python_version:
+        type: choice
+        required: true
+        description: "select Python version"
+        options: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+        default: "3.14"
+      avd_version:
+        type: string
+        required: true
+        description: "AVD release to install, for example v6.4.0"
+        default: "v6.4.0"
+
+env:
+  IMAGE_NAME: ghcr.io/${{ github.repository }}/universal
+  # IMAGE_TAG: python${{ inputs.python_version }}-avd-${{ github.ref_name }}
+  IMAGE_TAG: python${{ inputs.python_version }}-avd-${{ inputs.avd_version }}
+
+jobs:
+  build_image:
+    strategy:
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+      packages: write
+    env:
+      BUILDX_NO_DEFAULT_ATTESTATIONS: 1
+      LOCAL_BASE_IMAGE: avd-local/base
+      PYTHON_VERSION: ${{ inputs.python_version }}
+      ARCH: ${{ matrix.arch }}
+      USERNAME: avd
+      UID: 1000
+      GID: 1000
+    steps:
+      - name: Checkout code ✅
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node 🟢
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22"
+
+      - name: Install devcontainer CLI 📦
+        run: npm install -g @devcontainers/cli@0.89.0
+
+      - name: Login to GitHub Container Registry 🗝️
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get RFC3339 timestamp for org.opencontainers.image.created label ⌚
+        run: echo "RFC3339_TIMESTAMP=$(date --rfc-3339=seconds)" >> "$GITHUB_ENV"
+
+      - name: Build base image 🔨
+        env:
+          FROM_IMAGE: python
+          FROM_VARIANT: ${{ inputs.python_version }}-slim-bookworm
+          IMAGE_VERSION: python${{ inputs.python_version }}
+        run: |
+          devcontainer build \
+            --workspace-folder containers/base \
+            --image-name "$LOCAL_BASE_IMAGE:python$PYTHON_VERSION"
+
+      - name: Build universal image 🔨
+        env:
+          FROM_IMAGE: ${{ env.LOCAL_BASE_IMAGE }}
+          FROM_VARIANT: python${{ inputs.python_version }}
+          IMAGE_VERSION: ${{ env.IMAGE_TAG }}
+          # PYAVD_INSTALL_LOCATION: git+https://github.com/${{ github.repository }}.git@${{ github.ref_name }}#subdirectory=python-avd
+          # ANSIBLE_INSTALL_LOCATION: git+https://github.com/${{ github.repository }}.git#/ansible_collections/arista/avd/,${{ github.ref_name }}
+          PYAVD_INSTALL_LOCATION: git+https://github.com/aristanetworks/avd.git@${{ inputs.avd_version }}#subdirectory=python-avd
+          ANSIBLE_INSTALL_LOCATION: git+https://github.com/aristanetworks/avd.git#/ansible_collections/arista/avd/,${{ inputs.avd_version }}
+        run: |
+          devcontainer build \
+            --workspace-folder containers/universal \
+            --image-name "$IMAGE_NAME:$IMAGE_TAG-$ARCH" \
+            --label "org.opencontainers.image.source=https://github.com/$GITHUB_REPOSITORY"
+
+      - name: Check image 🔍
+        run: |
+          docker run --rm "$IMAGE_NAME:$IMAGE_TAG-$ARCH" \
+            sh -c 'whoami; uname -m; python --version; pip show pyavd | grep ^Version; ansible-galaxy collection list arista.avd'
+
+      - name: Push image 🚀
+        run: docker push "$IMAGE_NAME:$IMAGE_TAG-$ARCH"
+
+  publish_manifest:
+    needs: build_image
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Login to GitHub Container Registry 🗝️
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish multi-arch image 🏷️
+        run: |
+          docker buildx imagetools create \
+            --tag "$IMAGE_NAME:$IMAGE_TAG" \
+            "$IMAGE_NAME:$IMAGE_TAG-amd64" \
+            "$IMAGE_NAME:$IMAGE_TAG-arm64"
+          docker buildx imagetools inspect "$IMAGE_NAME:$IMAGE_TAG"
