@@ -82,7 +82,8 @@ jobs:
     needs: build_image
     runs-on: ubuntu-24.04
     permissions:
-      contents: read
+      # Required to create the release.
+      contents: write
       packages: write
     steps:
       - name: Login to GitHub Container Registry 🗝️
@@ -99,3 +100,35 @@ jobs:
             "$IMAGE_NAME:$IMAGE_TAG-amd64" \
             "$IMAGE_NAME:$IMAGE_TAG-arm64"
           docker buildx imagetools inspect "$IMAGE_NAME:$IMAGE_TAG"
+
+      - name: Create or update release 📝
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ inputs.avd_version }}
+        run: |
+          IMAGE="$IMAGE_NAME:$IMAGE_TAG"
+          DIGEST=$(docker buildx imagetools inspect "$IMAGE" --format '{{json .Manifest.Digest}}' | tr -d '"')
+          DEBIAN=$(docker run --rm "$IMAGE" cat /etc/debian_version)
+          PYTHON=$(docker run --rm "$IMAGE" python -c 'import platform; print(platform.python_version())')
+          AVD=$(docker run --rm "$IMAGE" sh -c 'pip show pyavd | sed -n "s/^Version: //p"')
+          TITLE="Python $PYTHON, AVD $AVD"
+
+          cat > release-notes.md <<EOF
+          Image: \`$IMAGE\`
+          Digest: \`$DIGEST\`
+
+          - Debian $DEBIAN (trixie)
+          - Python $PYTHON
+          - AVD $AVD
+          - Merged the base and universal images into one Dockerfile
+          - Removed Docker-in-Docker and \`community.general\`
+          - Removed the compromised emSign ECC Root CA - G3
+          - Last build on $(date -u '+%Y-%m-%d %H:%M UTC') from commit $GITHUB_SHA
+          EOF
+
+          if gh release view "$RELEASE_TAG" > /dev/null 2>&1; then
+            gh release edit "$RELEASE_TAG" --title "$TITLE" --notes-file release-notes.md
+          else
+            gh release create "$RELEASE_TAG" --target "$GITHUB_SHA" --title "$TITLE" --notes-file release-notes.md
+          fi
