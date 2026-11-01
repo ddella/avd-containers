@@ -19,13 +19,29 @@ name: Build universal container (native runners)
         description: "AVD release to install, for example v6.4.0"
         default: "v6.4.0"
 
-env:
-  IMAGE_NAME: ghcr.io/${{ github.repository }}/universal
-  # IMAGE_TAG: python${{ inputs.python_version }}-avd-${{ github.ref_name }}
-  IMAGE_TAG: python${{ inputs.python_version }}-avd-${{ inputs.avd_version }}
-
 jobs:
+  # Set the image name and tag once, so all jobs use the same date.
+  # Name: avd<avd_version>-python<python_version>, tag: <year>.<month>.<build number>
+  image_metadata:
+    runs-on: ubuntu-24.04
+    permissions: {}
+    outputs:
+      image_name: ${{ steps.metadata.outputs.image_name }}
+      image_tag: ${{ steps.metadata.outputs.image_tag }}
+    steps:
+      - name: Set image name and tag 🏷️
+        id: metadata
+        env:
+          PYTHON_VERSION: ${{ inputs.python_version }}
+          AVD_VERSION: ${{ inputs.avd_version }}
+        run: |
+          {
+            echo "image_name=ghcr.io/$GITHUB_REPOSITORY/avd${AVD_VERSION#v}-python$PYTHON_VERSION"
+            echo "image_tag=$(date -u +%Y.%m).$GITHUB_RUN_NUMBER"
+          } >> "$GITHUB_OUTPUT"
+
   build_image:
+    needs: image_metadata
     strategy:
       matrix:
         include:
@@ -38,6 +54,8 @@ jobs:
       contents: read
       packages: write
     env:
+      IMAGE_NAME: ${{ needs.image_metadata.outputs.image_name }}
+      IMAGE_TAG: ${{ needs.image_metadata.outputs.image_tag }}
       BUILDX_NO_DEFAULT_ATTESTATIONS: 1
       PYTHON_VERSION: ${{ inputs.python_version }}
       AVD_VERSION: ${{ inputs.avd_version }}
@@ -79,12 +97,15 @@ jobs:
         run: docker push "$IMAGE_NAME:$IMAGE_TAG-$ARCH"
 
   publish_manifest:
-    needs: build_image
+    needs: [image_metadata, build_image]
     runs-on: ubuntu-24.04
     permissions:
       # Required **ONLY** to create the release.
       # contents: write
       packages: write
+    env:
+      IMAGE_NAME: ${{ needs.image_metadata.outputs.image_name }}
+      IMAGE_TAG: ${{ needs.image_metadata.outputs.image_tag }}
     steps:
       - name: Login to GitHub Container Registry 🗝️
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0

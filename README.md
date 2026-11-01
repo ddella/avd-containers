@@ -10,20 +10,22 @@ Run this from your AVD project folder:
 
 ```bash
 docker run -it --rm -v "$PWD":/workspace -w /workspace \
-  ghcr.io/ddella/avd-containers/universal:python3.14-avd-v6.4.0
+  ghcr.io/ddella/avd-containers/avd6.4.0-python3.14:2026.11.9
 ```
+
+Replace `2026.11.9` with the latest tag from the package page.
 
 You land in a zsh prompt as the `avd` user, ready to run `ansible-playbook`. The user has UID 1000, so files you create are owned by UID 1000 on your machine.
 
 ## Tags
 
-Tags follow the pattern `python<python-version>-avd-<avd-version>`:
+Each combination of AVD and Python has its own package, named `avd<avd-version>-python<python-version>`. Tags use `<year>.<month>.<build-number>`, and the build number keeps increasing across months:
 
 | Tag | Platform |
 |---|---|
-| `python3.14-avd-v6.4.0` | `linux/amd64` and `linux/arm64`, selected automatically |
-| `python3.14-avd-v6.4.0-amd64` | `linux/amd64` only |
-| `python3.14-avd-v6.4.0-arm64` | `linux/arm64` only |
+| `2026.11.9` | `linux/amd64` and `linux/arm64`, selected automatically |
+| `2026.11.9-amd64` | `linux/amd64` only |
+| `2026.11.9-arm64` | `linux/arm64` only |
 
 ## What's included
 
@@ -58,7 +60,7 @@ The SSH server listens on port 2222 and isn't started by default. This command s
 ```bash
 docker run -d --name avd -p 2222:2222 \
   -v ~/.ssh/id_ed25519.pub:/home/avd/.ssh/authorized_keys:ro \
-  ghcr.io/ddella/avd-containers/universal:python3.14-avd-v6.4.0 \
+  ghcr.io/ddella/avd-containers/avd6.4.0-python3.14:2026.11.9 \
   /usr/local/share/ssh-init.sh sleep infinity
 
 ssh -p 2222 avd@localhost
