@@ -30,7 +30,8 @@ LABEL org.opencontainers.image.vendor="Arista Networks"
 #     && apt-get clean
 
 # Install essential tools.
-RUN apt-get update \
+RUN printf 'path-exclude=/usr/lib/*/libicu*\n' > /etc/dpkg/dpkg.cfg.d/no-icu \
+    apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get upgrade -y --no-install-recommends \
     && apt-get install -y --no-install-recommends \
     make \

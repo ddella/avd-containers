@@ -30,7 +30,7 @@ ENV PATH=$PATH:/home/${USERNAME}/.local/bin
 RUN pip install --no-cache-dir "pyavd[ansible] @ ${PYAVD_INSTALL_LOCATION}" \
     && ansible-galaxy collection install ${ANSIBLE_INSTALL_LOCATION} \
     # install community.general to support callback plugins in ansible.cfg, etc.
-    && ansible-galaxy collection install community.general \
+    # && ansible-galaxy collection install community.general \
     && pip install --no-cache-dir --upgrade certifi \
     && rm -rf ~/.cache ~/.ansible/galaxy_cache \
         ~/.ansible/collections/ansible_collections/*/*/tests \
