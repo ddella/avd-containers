@@ -5,6 +5,7 @@ FROM ghcr.io/ddella/avd-containers/avd6.4.0-python3.14:2026.11.9
 
 ARG TARGETARCH
 ARG GH_VERSION=2.103.3
+ARG GLAB_VERSION=1.126.0
 ARG AGE_VERSION=v1.3.2
 ARG YQ_VERSION=v4.54.1
 ARG YAMLLINT_VERSION=1.38.0
@@ -24,15 +25,12 @@ USER root
 #     && pip3 install --no-cache-dir -r /tmp/requirements.txt \
 #     && pip3 install --no-cache-dir --upgrade certifi
 
-### GitLab cli
-# SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-# RUN VER=$(curl -s "https://gitlab.com/api/v4/projects/34675721/releases" | jq -r '.[0].tag_name') && \
-#   echo "Installing glab version [${VER}] for [${TARGETARCH}]" && \
-#   curl -LO "https://gitlab.com/gitlab-org/cli/-/releases/${VER}/downloads/glab_${VER#v}_linux_${TARGETARCH}.deb" && \
-#   dpkg -i "./glab_${VER#v}_linux_${TARGETARCH}.deb" && \
-#   rm -f "glab_${VER#v}_linux_${TARGETARCH}.deb"
+# GitLab cli. glab adds 51 MB
+# RUN curl -fsSLO "https://gitlab.com/gitlab-org/cli/-/releases/v${GLAB_VERSION}/downloads/glab_${GLAB_VERSION}_linux_${TARGETARCH}.deb" \
+#     && dpkg -i "glab_${GLAB_VERSION}_linux_${TARGETARCH}.deb" \
+#     && rm -f "glab_${GLAB_VERSION}_linux_${TARGETARCH}.deb"
 
-# GitHub cli
+# GitHub cli. gh adds 42 MB
 RUN curl -fsSLO "https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_${TARGETARCH}.deb" \
     && dpkg -i "gh_${GH_VERSION}_linux_${TARGETARCH}.deb" \
     && rm -f "gh_${GH_VERSION}_linux_${TARGETARCH}.deb"
