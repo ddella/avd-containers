@@ -1,0 +1,54 @@
+//
+// https://containers.dev/implementors/json_reference/
+//
+{
+"name": "ACME NetDevOps AVD SANDBOX Lab",
+  "image": "ghcr.io/nxt-ACME-com/avd-6.4.0-py3.14:latest",
+  "initializeCommand": "docker pull ghcr.io/nxt-ACME-com/avd-6.4.0-py3.14:latest",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
+      "version": "latest",
+      "dockerDashComposeVersion": "v2"
+    }
+  },
+
+  "postCreateCommand": "zsh .devcontainer/setup.sh",
+  "postStartCommand": "zsh .devcontainer/check-update.sh",
+
+  // tells the container to share the kernel's hostname namespace with your local machine
+  "runArgs": ["--uts=host"],
+  "remoteUser": "avd",
+  "customizations": {
+    "vscode": {
+      "settings": {
+        // Scales the entire user interface (menus, sidebar, text)
+        "window.zoomLevel": 2,
+        // Makes the file explorer sidebar text easier to read
+        "workbench.tree.indent": 20,
+        // Prevents pixelated font rendering on certain high-res screens
+        "editor.fontLigatures": true,
+        // Boosts terminal text readability (often stays small despite window zoom)
+        "terminal.integrated.fontSize": 14,
+        "terminal.integrated.lineHeight": 1.2,
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "editor.fontSize": 14,
+        "editor.tabSize": 2
+      },
+      "extensions": [
+        "ms-vscode-remote.remote-containers"
+      ]
+    }
+  },
+
+  // Add mounts to a container
+  "mounts": [
+    "source=${localEnv:HOME}/.ssh,target=/home/avd/.ssh,type=bind,consistency=cached",
+    "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
+    // map the OS trusted store to Python trusted store
+    // "source=/etc/ssl/certs/ca-certificates.crt,target=/home/avd/.local/lib/python3.14/site-packages/certifi/cacert.pem,type=bind"
+  ],
+  "remoteEnv": {
+    "GITLAB_PAT": "${localEnv:GITLAB_PAT}",
+    "LOCAL_WORKSPACE_FOLDER": "${localWorkspaceFolder}"
+  }
+}

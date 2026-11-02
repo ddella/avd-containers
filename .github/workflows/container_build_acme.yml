@@ -1,0 +1,100 @@
+---
+# Builds the ACME image for amd64 and arm64 on native runners (no QEMU).
+# The image is built from containers/custom/acme, on top of the base image in its Dockerfile.
+
+name: Build ACME container (native runners)
+
+"on":
+  workflow_dispatch:
+
+env:
+  # Keep the AVD and Python versions the same as the FROM line in the Dockerfile.
+  IMAGE_NAME: ghcr.io/${{ github.repository }}/acme-avd6.4.0-python3.14
+
+jobs:
+  # Set the image tag once, so all jobs use the same date.
+  # Tag: <year>.<month>.<build number>
+  image_metadata:
+    runs-on: ubuntu-24.04
+    permissions: {}
+    outputs:
+      image_tag: ${{ steps.metadata.outputs.image_tag }}
+    steps:
+      - name: Set image tag 🏷️
+        id: metadata
+        run: echo "image_tag=$(date -u +%Y.%m).$GITHUB_RUN_NUMBER" >> "$GITHUB_OUTPUT"
+
+  build_image:
+    needs: image_metadata
+    strategy:
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+      packages: write
+    env:
+      IMAGE_TAG: ${{ needs.image_metadata.outputs.image_tag }}
+      BUILDX_NO_DEFAULT_ATTESTATIONS: 1
+      ARCH: ${{ matrix.arch }}
+    steps:
+      - name: Checkout code ✅
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Login to GitHub Container Registry 🗝️
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get RFC3339 timestamp for org.opencontainers.image.created label ⌚
+        run: echo "RFC3339_TIMESTAMP=$(date --rfc-3339=seconds)" >> "$GITHUB_ENV"
+
+      - name: Build image 🔨
+        run: |
+          docker build \
+            --pull \
+            --build-arg "IMAGE_VERSION=$IMAGE_TAG" \
+            --label "org.opencontainers.image.created=$RFC3339_TIMESTAMP" \
+            --label "org.opencontainers.image.source=https://github.com/$GITHUB_REPOSITORY" \
+            --tag "$IMAGE_NAME:$IMAGE_TAG-$ARCH" \
+            containers/custom/acme
+
+      - name: Check image 🔍
+        run: |
+          docker run --rm "$IMAGE_NAME:$IMAGE_TAG-$ARCH" \
+            sh -c 'whoami; uname -m; gh --version | head -1; age --version; yq --version; yamllint --version; ls /usr/local/share/ca-certificates; ansible-galaxy collection list arista.avd'
+
+      - name: Push image 🚀
+        run: docker push "$IMAGE_NAME:$IMAGE_TAG-$ARCH"
+
+  publish_manifest:
+    needs: [image_metadata, build_image]
+    runs-on: ubuntu-24.04
+    permissions:
+      packages: write
+    env:
+      IMAGE_TAG: ${{ needs.image_metadata.outputs.image_tag }}
+    steps:
+      - name: Login to GitHub Container Registry 🗝️
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish multi-arch image 🏷️
+        run: |
+          docker buildx imagetools create \
+            --tag "$IMAGE_NAME:$IMAGE_TAG" \
+            --tag "$IMAGE_NAME:latest" \
+            "$IMAGE_NAME:$IMAGE_TAG-amd64" \
+            "$IMAGE_NAME:$IMAGE_TAG-arm64"
+          docker buildx imagetools inspect "$IMAGE_NAME:$IMAGE_TAG"

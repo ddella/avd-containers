@@ -118,6 +118,7 @@ jobs:
         run: |
           docker buildx imagetools create \
             --tag "$IMAGE_NAME:$IMAGE_TAG" \
+            --tag "$IMAGE_NAME:latest" \
             "$IMAGE_NAME:$IMAGE_TAG-amd64" \
             "$IMAGE_NAME:$IMAGE_TAG-arm64"
           docker buildx imagetools inspect "$IMAGE_NAME:$IMAGE_TAG"
