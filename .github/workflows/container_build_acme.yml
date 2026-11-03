@@ -82,7 +82,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Get RFC3339 timestamp for org.opencontainers.image.created label ⌚
+      - name: Get RFC3339 timestamp for com.acme.image.created label ⌚
         run: echo "RFC3339_TIMESTAMP=$(date --rfc-3339=seconds)" >> "$GITHUB_ENV"
 
       - name: Build image 🔨
@@ -94,7 +94,7 @@ jobs:
             --build-arg "GLAB_VERSION=$GLAB_VERSION" \
             --build-arg "AGE_VERSION=$AGE_VERSION" \
             --build-arg "YQ_VERSION=$YQ_VERSION" \
-            --label "org.opencontainers.image.created=$RFC3339_TIMESTAMP" \
+            --build-arg "RFC3339_TIMESTAMP=$RFC3339_TIMESTAMP" \
             --label "org.opencontainers.image.source=https://github.com/$GITHUB_REPOSITORY" \
             --tag "$IMAGE_NAME:$IMAGE_TAG-$ARCH" \
             containers/custom/acme

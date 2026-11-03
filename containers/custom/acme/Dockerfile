@@ -9,11 +9,14 @@ ARG GLAB_VERSION=1.126.0
 ARG AGE_VERSION=v1.3.2
 ARG YQ_VERSION=v4.54.1
 ARG YAMLLINT_VERSION=1.38.0
-# Image version will be set by the build workflow
+# Image version and timestamp will be set by the build workflow
 ARG IMAGE_VERSION
+ARG RFC3339_TIMESTAMP
 
 LABEL org.opencontainers.image.description="AVD image for Acme"
-LABEL org.opencontainers.image.version=${IMAGE_VERSION}
+# org.opencontainers.image.created and .version are inherited from the base image
+LABEL com.acme.image.created=${RFC3339_TIMESTAMP}
+LABEL com.acme.image.version=${IMAGE_VERSION}
 LABEL org.opencontainers.image.base.name="ghcr.io/ddella/avd-containers/avd6.4.0-python3.14:2026.11.9"
 
 # Switch to root to perform admin tasks since inherit 'avd' user from the base image
