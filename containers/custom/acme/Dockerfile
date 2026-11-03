@@ -1,7 +1,7 @@
 # ==========================================
 # STAGE 0: Final stage
 # ==========================================
-FROM ghcr.io/ddella/avd-containers/avd6.4.0-python3.14:2026.11.9
+FROM ghcr.io/ddella/avd-containers/avd6.4.0-python3.14:latest
 
 ARG TARGETARCH
 ARG GH_VERSION=2.103.3
