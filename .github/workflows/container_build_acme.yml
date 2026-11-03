@@ -2,6 +2,10 @@
 # Builds the ACME image for amd64 and arm64 on native runners (no QEMU).
 # The image is built from containers/custom/acme, on top of the base image in its Dockerfile.
 
+# The ACME workflow now looks up the latest 'gh', 'glab', 'age' and 'yq' versions on every build and passes
+# them to docker build. The Dockerfile is unchanged, so its pinned ARG values are still the defaults
+# for local builds.
+
 name: Build ACME container (native runners)
 
 "on":
@@ -12,17 +16,37 @@ env:
   IMAGE_NAME: ghcr.io/${{ github.repository }}/acme-avd6.4.0-python3.14
 
 jobs:
-  # Set the image tag once, so all jobs use the same date.
+  # Set the image tag and tool versions once, so all jobs use the same date and versions.
   # Tag: <year>.<month>.<build number>
+  # gh and glab versions have no leading "v", age and yq versions keep it, as the Dockerfile expects.
   image_metadata:
     runs-on: ubuntu-24.04
     permissions: {}
     outputs:
       image_tag: ${{ steps.metadata.outputs.image_tag }}
+      gh_version: ${{ steps.metadata.outputs.gh_version }}
+      glab_version: ${{ steps.metadata.outputs.glab_version }}
+      age_version: ${{ steps.metadata.outputs.age_version }}
+      yq_version: ${{ steps.metadata.outputs.yq_version }}
     steps:
-      - name: Set image tag 🏷️
+      - name: Set image tag and tool versions 🏷️
         id: metadata
-        run: echo "image_tag=$(date -u +%Y.%m).$GITHUB_RUN_NUMBER" >> "$GITHUB_OUTPUT"
+        # Explicit shell enables pipefail, so a failed lookup stops the job instead of giving an empty version.
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "image_tag=$(date -u +%Y.%m).$GITHUB_RUN_NUMBER" >> "$GITHUB_OUTPUT"
+          gh_version=$(gh api repos/cli/cli/releases/latest --jq '.tag_name | ltrimstr("v")')
+          glab_version=$(curl -fsSL https://gitlab.com/api/v4/projects/gitlab-org%2Fcli/releases/permalink/latest | jq -r '.tag_name | ltrimstr("v")')
+          age_version=$(gh api repos/FiloSottile/age/releases/latest --jq '.tag_name')
+          yq_version=$(gh api repos/mikefarah/yq/releases/latest --jq '.tag_name')
+          {
+            echo "gh_version=$gh_version"
+            echo "glab_version=$glab_version"
+            echo "age_version=$age_version"
+            echo "yq_version=$yq_version"
+          } | tee -a "$GITHUB_OUTPUT"
 
   build_image:
     needs: image_metadata
@@ -39,6 +63,10 @@ jobs:
       packages: write
     env:
       IMAGE_TAG: ${{ needs.image_metadata.outputs.image_tag }}
+      GH_VERSION: ${{ needs.image_metadata.outputs.gh_version }}
+      GLAB_VERSION: ${{ needs.image_metadata.outputs.glab_version }}
+      AGE_VERSION: ${{ needs.image_metadata.outputs.age_version }}
+      YQ_VERSION: ${{ needs.image_metadata.outputs.yq_version }}
       BUILDX_NO_DEFAULT_ATTESTATIONS: 1
       ARCH: ${{ matrix.arch }}
     steps:
@@ -62,6 +90,10 @@ jobs:
           docker build \
             --pull \
             --build-arg "IMAGE_VERSION=$IMAGE_TAG" \
+            --build-arg "GH_VERSION=$GH_VERSION" \
+            --build-arg "GLAB_VERSION=$GLAB_VERSION" \
+            --build-arg "AGE_VERSION=$AGE_VERSION" \
+            --build-arg "YQ_VERSION=$YQ_VERSION" \
             --label "org.opencontainers.image.created=$RFC3339_TIMESTAMP" \
             --label "org.opencontainers.image.source=https://github.com/$GITHUB_REPOSITORY" \
             --tag "$IMAGE_NAME:$IMAGE_TAG-$ARCH" \
