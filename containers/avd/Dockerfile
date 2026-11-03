@@ -28,8 +28,8 @@ ENV ANSIBLE_CONFIG="ansible.cfg"
 ENV PATH=$PATH:/home/avd/.local/bin
 
 # Force Python/requests to use the OS trust store instead of its own built-in one
-ENV REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
-ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
+# ENV REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
+# ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 
 # Add entrypoint script and the script that starts sshd.
 COPY ./entrypoint.sh /bin/entrypoint.sh
