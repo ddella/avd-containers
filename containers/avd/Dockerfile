@@ -18,6 +18,9 @@ LABEL org.opencontainers.image.documentation="https://avd.arista.com/"
 LABEL org.opencontainers.image.created=${RFC3339_TIMESTAMP}
 LABEL org.opencontainers.image.version=${IMAGE_VERSION}
 LABEL org.opencontainers.image.vendor="Arista Networks"
+LABEL com.arista.avd.version=${AVD_VERSION}
+# PYTHON_VERSION is set by the python base image to the exact release, e.g. 3.14.10
+LABEL com.arista.avd.python_version=${PYTHON_VERSION}
 # VS Code settings: the remote user, the script that starts sshd and the extensions to install.
 LABEL devcontainer.metadata='[{"remoteUser":"avd"},{"entrypoint":"/usr/local/share/ssh-init.sh"},{"customizations":{"vscode":{"extensions":["ms-python.python","ms-python.vscode-pylance","mechatroner.rainbow-csv","oderwat.indent-rainbow","pomdtr.excalidraw-editor"]}}}]'
 
