@@ -1,38 +1,40 @@
-# AVD universal container
+# AVD container
 
-A small container image for working with [Arista AVD](https://avd.arista.com/). It has AVD, Ansible and the tools you need day to day already installed, so you can start building network configurations straight away.
+A small container image for working with [Arista AVD](https://avd.arista.com/). AVD, Ansible and the tools you need day to day are already installed, so you can start building network configurations straight away.
 
-It's a customised build of Arista's `ghcr.io/aristanetworks/avd/universal` image, rebuilt from one Dockerfile to be smaller. It installs AVD unmodified from [aristanetworks/avd](https://github.com/aristanetworks/avd).
+It's a slimmed-down rebuild of Arista's `ghcr.io/aristanetworks/avd/universal` image, made from a single Dockerfile. AVD itself is installed unmodified from [aristanetworks/avd](https://github.com/aristanetworks/avd).
 
-## AVD 6.5.0+ dependency chain
-
-AVD 6.5.0+ dependency chain, from each collection's upstream galaxy.yml, is:
-```text
-arista.avd 6.5.0
-└── arista.eos >=12.2.0
-    └── ansible.netcommon >=8.5.2
-        └── ansible.utils >=3.0.0
-```
+> [!NOTE]
+> This is a personal community project. It is not affiliated with, endorsed by or supported by Arista Networks.
 
 ## Quick start
 
-Run this from your AVD project folder:
+Pull the image:
+
+```bash
+docker pull ghcr.io/ddella/avd-containers/avd6.5.0-python3.14:latest
+```
+
+It's about 144 MB to download and 636 MB on disk.
+
+Then run it from your AVD project folder:
 
 ```bash
 docker run -it --rm -v "$PWD":/workspace -w /workspace \
-  ghcr.io/ddella/avd-containers/avd6.4.0-python3.14:2026.11.9
+  ghcr.io/ddella/avd-containers/avd6.5.0-python3.14:latest
 ```
 
-Replace `2026.11.9` with the latest tag from the package page.
+You land in a zsh prompt as the `avd` user, ready to run `ansible-playbook`. The `avd` user has UID 1000, so files you create in `/workspace` are owned by UID 1000 on your machine.
 
-You land in a zsh prompt as the `avd` user, ready to run `ansible-playbook`. The user has UID 1000, so files you create are owned by UID 1000 on your machine.
+## Images and tags
 
-## Tags
+Each combination of AVD and Python is published as its own package, named `avd<avd-version>-python<python-version>`, for example `avd6.4.0-python3.12`. AVD 6.4.0 and 6.5.0 are available, with Python 3.10 to 3.14.
 
-Each combination of AVD and Python has its own package, named `avd<avd-version>-python<python-version>`. Tags use `<year>.<month>.<build-number>`, and the build number keeps increasing across months:
+Tags use `<year>.<month>.<build-number>`. The build number keeps increasing across months.
 
 | Tag | Platform |
 |---|---|
+| `latest` | The most recent build, `linux/amd64` and `linux/arm64` |
 | `2026.11.9` | `linux/amd64` and `linux/arm64`, selected automatically |
 | `2026.11.9-amd64` | `linux/amd64` only |
 | `2026.11.9-arm64` | `linux/arm64` only |
@@ -42,35 +44,45 @@ Each combination of AVD and Python has its own package, named `avd<avd-version>-
 | Component | Version |
 |---|---|
 | Debian | 13 (trixie), slim |
-| Python | 3.14 |
-| `pyavd` with Ansible extras | 6.4.0 |
-| `arista.avd` collection | 6.4.0 |
+| Python | 3.10 to 3.14, depending on the image |
+| `pyavd` with Ansible extras | Matches the image's AVD version |
+| `arista.avd` collection | 6.4.0 or 6.5.0 |
+| `arista.eos` collection | 12.3.0 |
+| `ansible.netcommon` collection | 8.7.1 |
+| `ansible.utils` collection | 6.1.1 |
 | `ansible-core` | 2.21 |
 
-The `arista.eos`, `ansible.netcommon` and `ansible.utils` collections are installed as dependencies.
+Only `arista.avd` is installed directly. The other collections come in as its dependencies, as declared in each collection's `galaxy.yml`:
+
+```text
+arista.avd 6.5.0
+└── arista.eos >=12.2.0
+    └── ansible.netcommon >=8.5.2
+        └── ansible.utils >=3.0.0
+```
 
 **Tools:** `git`, `make`, `curl`, `wget`, `jq`, `less`, `nano`, `vim-tiny`, `htop`, `lsof`, `tree`, `rsync`, `unzip`, `xz-utils`, `procps`, `iproute2`, `net-tools`, `sudo`, an SSH client and server, and zsh with Oh My Zsh.
 
-Debian packages, `pip` and `certifi` are upgraded each time the image is built.
+Debian packages, `pip` and `certifi` are upgraded every time the image is built.
 
-## What's been left out
+## What's left out
 
 These parts of the upstream image were removed to save space:
 
-- Docker-in-Docker, so you can't run `docker` commands inside the container.
-- The `community.general` collection. To add it, run `ansible-galaxy collection install community.general`.
-- Test files from the Ansible collections, and `ansible-test`.
-- Tools such as `iptables`, `socat`, `strace`, `gpg`, `man` and `zip`. To add one, run `sudo apt-get update && sudo apt-get install <package>`.
-- Locales other than `C.UTF-8`.
+- **Docker-in-Docker.** You can't run `docker` commands inside the container.
+- **The `community.general` collection.** AVD doesn't need it. If your own playbooks do, run `ansible-galaxy collection install community.general`.
+- **Test files** from the Ansible collections, and `ansible-test`.
+- **Tools** such as `iptables`, `socat`, `strace`, `gpg`, `man` and `zip`. To add one, run `sudo apt-get update && sudo apt-get install <package>`.
+- **Locales** other than `C.UTF-8`.
 
 ## Connecting over SSH
 
-The SSH server listens on port 2222 and isn't started by default. This command starts it and logs in with your public key, so change the key path if yours is different:
+The SSH server listens on port 2222 but isn't started by default. This command starts it and logs you in with your public key. Change the key path if yours is different:
 
 ```bash
 docker run -d --name avd -p 2222:2222 \
   -v ~/.ssh/id_ed25519.pub:/home/avd/.ssh/authorized_keys:ro \
-  ghcr.io/ddella/avd-containers/avd6.4.0-python3.14:2026.11.9 \
+  ghcr.io/ddella/avd-containers/avd6.5.0-python3.14:latest \
   /usr/local/share/ssh-init.sh sleep infinity
 
 ssh -p 2222 avd@localhost
@@ -78,17 +90,31 @@ ssh -p 2222 avd@localhost
 
 ## Building it yourself
 
+### Locally
+
 The image is built from [`containers/avd`](https://github.com/ddella/avd-containers/tree/main/containers/avd):
 
 ```bash
 docker build --pull \
   --build-arg PYTHON_VERSION=3.14 \
-  --build-arg AVD_VERSION=v6.4.0 \
-  --tag avd-universal:local \
+  --build-arg AVD_VERSION=v6.5.0 \
+  --tag avd:local \
   containers/avd
 ```
 
-The published images are built for each architecture on native runners by the [`container_build_native.yml`](https://github.com/ddella/avd-containers/blob/main/.github/workflows/container_build_native.yml) workflow.
+### With GitHub Actions
+
+The published images are built by the [`container_build_native.yml`](https://github.com/ddella/avd-containers/blob/main/.github/workflows/container_build_native.yml) workflow, on native amd64 and arm64 runners. Start a build and follow it with:
+
+```bash
+gh workflow run container_build_native.yml --ref main -f python_version=3.14 -f avd_version=v6.5.0
+gh run watch
+```
+
+`python_version` accepts 3.10 to 3.14, and `avd_version` accepts `v6.4.0` or `v6.5.0`.
+
+> [!IMPORTANT]
+> Python 3.15 isn't supported yet.
 
 ## License
 

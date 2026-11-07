@@ -1,5 +1,33 @@
-:set tabstop=2
-:set expandtab
-:set shiftwidth=2
-:set nocompatible
-:set backspace=indent,eol,start
+" ~/.vimrc for the AVD image. Works with vim-tiny (the default 'vi') and full vim.
+
+" Use vim defaults instead of old vi behaviour (arrow keys, backspace, undo).
+set nocompatible
+set backspace=indent,eol,start
+
+" Numeric keypad: keep it in numeric mode so the keys type digits, + - * / . and Enter
+" instead of escape sequences that end up as letters like 'p', 'q' or 'Oq'.
+set t_ks= t_ke=
+" Some terminals still send keypad codes. Vim's built-in xterm codes handle all of them except
+" keypad 3 (ESC O s) and 9 (ESC O y), so define those. The ^[ below is a literal Esc character.
+set <k3>=Os <k9>=Oy
+" Recognise escape sequences (arrows, keypad) quickly, without delaying a plain Esc.
+set ttimeout ttimeoutlen=50
+
+" YAML: 2-space indentation, spaces only, never tabs.
+set tabstop=2 softtabstop=2 shiftwidth=2 expandtab shiftround
+" Keep the indent of the previous line. Not smartindent/cindent, they break YAML lists and comments.
+set autoindent nosmartindent nocindent
+" Show tabs and trailing spaces, both are errors in YAML.
+set list listchars=tab:>-,trail:~,nbsp:+
+
+" Useful display.
+set ruler showcmd showmatch
+set incsearch hlsearch ignorecase smartcase
+set encoding=utf-8 fileformat=unix
+
+" Full vim only: highlighting and YAML-specific indent. vim-tiny has no syntax support.
+if has('syntax')
+  syntax on
+  filetype plugin indent on
+  autocmd FileType yaml setlocal tabstop=2 softtabstop=2 shiftwidth=2 expandtab indentkeys-=0# indentkeys-=<:>
+endif

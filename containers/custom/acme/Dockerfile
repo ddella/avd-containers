@@ -4,20 +4,19 @@
 FROM ghcr.io/ddella/avd-containers/avd6.4.0-python3.14:latest
 
 ARG TARGETARCH
-ARG GH_VERSION=2.103.3
-ARG GLAB_VERSION=1.126.0
-ARG AGE_VERSION=v1.3.2
-ARG YQ_VERSION=v4.54.1
-ARG YAMLLINT_VERSION=1.38.0
+# ARG GH_VERSION=2.103.3
+# ARG GLAB_VERSION=1.126.0
+# ARG AGE_VERSION=v1.3.2
+# ARG YQ_VERSION=v4.54.1
 # Image version and timestamp will be set by the build workflow
 ARG IMAGE_VERSION
 ARG RFC3339_TIMESTAMP
 
 LABEL org.opencontainers.image.description="AVD image for Acme"
 # org.opencontainers.image.created and .version are inherited from the base image
+# LABEL org.opencontainers.image.base.name="ghcr.io/ddella/avd-containers/avd6.4.0-python3.14:2026.11.9"
 LABEL com.acme.image.created=${RFC3339_TIMESTAMP}
 LABEL com.acme.image.version=${IMAGE_VERSION}
-LABEL org.opencontainers.image.base.name="ghcr.io/ddella/avd-containers/avd6.4.0-python3.14:2026.11.9"
 
 # Switch to root to perform admin tasks since inherit 'avd' user from the base image
 USER root
@@ -86,8 +85,8 @@ ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 # Switch back to the AVD base image's 'avd' user
 USER avd
 
-# Install 'yamllint'
-RUN pip install --no-cache-dir --user "yamllint==${YAMLLINT_VERSION}"
+# Install the latest 'yamllint'
+RUN pip install --no-cache-dir --user --upgrade yamllint
 
 # Also add the certificates to certifi, for sessions without the base image's ENV
 RUN awk 1 /usr/local/share/ca-certificates/*.crt >> "$(python3 -m certifi)"
