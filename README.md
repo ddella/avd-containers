@@ -12,7 +12,10 @@ It's a slimmed-down rebuild of Arista's `ghcr.io/aristanetworks/avd/universal` i
 Pull the image:
 
 ```bash
+# On GitLab
 docker pull ghcr.io/ddella/avd-containers/avd6.5.0-python3.14:latest
+# On GitLab
+docker pull registry.gitlab.com/ddella/avd-containers/avd6.5.0-python3.14:latest
 ```
 
 It's about 144 MB to download and 636 MB on disk.
@@ -378,3 +381,4 @@ Drop `-no-color` to get colored output in a terminal.
 ## License
 
 [Apache-2.0](https://github.com/ddella/avd-containers/blob/main/LICENSE), the same license as AVD.
+[Apache-2.0](https://gitlab.com/ddella/avd-containers/-/blob/main/LICENSE), the same license as AVD.

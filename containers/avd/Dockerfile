@@ -6,7 +6,7 @@ ARG RFC3339_TIMESTAMP
 # Image version will be set by the build workflow
 ARG IMAGE_VERSION
 # AVD release to install
-ARG AVD_VERSION=v6.4.0
+ARG AVD_VERSION=v6.5.0
 
 # set labels
 LABEL org.opencontainers.image.title="AVD container"
