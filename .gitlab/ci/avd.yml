@@ -1,3 +1,4 @@
+---
 # AVD image, built from containers/avd. Included by .gitlab-ci.yml, runs when the "image" input is "avd".
 # GitLab port of .github/workflows/container_build_native.yml.
 
@@ -40,7 +41,8 @@ avd_build:
         containers/avd
     - |
       docker run --rm "$IMAGE_NAME:$IMAGE_TAG-$ARCH" \
-        sh -c 'whoami; uname -m; python --version; pip show pyavd | grep ^Version; ansible-galaxy collection list arista.avd'
+        sh -c 'whoami; uname -m; python --version; pip show pyavd | \
+        grep ^Version; ansible-galaxy collection list arista.avd'
     - docker push "$IMAGE_NAME:$IMAGE_TAG-$ARCH"
 
 avd_publish:

@@ -1,3 +1,4 @@
+---
 # ACME image, built from containers/custom/acme on top of the AVD image selected by the inputs.
 # Included by .gitlab-ci.yml, runs when the "image" input is "acme".
 # GitLab port of .github/workflows/container_build_acme.yml.

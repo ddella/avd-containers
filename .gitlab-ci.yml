@@ -1,3 +1,4 @@
+---
 # Builds the AVD or the ACME image for amd64 and arm64 on native runners (no QEMU).
 # GitLab port of .github/workflows/container_build_native.yml and container_build_acme.yml.
 #
