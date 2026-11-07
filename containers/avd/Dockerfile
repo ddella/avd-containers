@@ -9,18 +9,20 @@ ARG IMAGE_VERSION
 ARG AVD_VERSION=v6.4.0
 
 # set labels
-LABEL org.opencontainers.image.description="AVD universal image with pre-installed AVD collection. The image is still in preview and under active development."
-LABEL com.arista.license_terms="https://github.com/aristanetworks/avd/blob/devel/LICENSE"
-LABEL org.opencontainers.image.licenses="Apache-2.0"
-LABEL org.opencontainers.image.authors="Arista PS Daniel Della-Noce <daniel.dellanoce@arista.com>"
+LABEL org.opencontainers.image.title="AVD container"
+LABEL org.opencontainers.image.description="Personal community image with Arista AVD pre-installed. Not affiliated with or supported by Arista Networks."
+LABEL org.opencontainers.image.authors="Daniel Della-Noce"
+LABEL org.opencontainers.image.vendor="Daniel Della-Noce"
 LABEL org.opencontainers.image.url="https://github.com/ddella/avd-containers"
-LABEL org.opencontainers.image.documentation="https://avd.arista.com/"
+LABEL org.opencontainers.image.source="https://github.com/ddella/avd-containers"
+LABEL org.opencontainers.image.documentation="https://github.com/ddella/avd-containers"
+LABEL org.opencontainers.image.licenses="Apache-2.0"
 LABEL org.opencontainers.image.created=${RFC3339_TIMESTAMP}
 LABEL org.opencontainers.image.version=${IMAGE_VERSION}
-LABEL org.opencontainers.image.vendor="Arista Networks"
-LABEL com.arista.avd.version=${AVD_VERSION}
+LABEL io.github.ddella.avd.version=${AVD_VERSION}
 # PYTHON_VERSION is set by the python base image to the exact release, e.g. 3.14.10
-LABEL com.arista.avd.python_version=${PYTHON_VERSION}
+LABEL io.github.ddella.avd.python_version=${PYTHON_VERSION}
+LABEL io.github.ddella.avd.license_terms="https://github.com/aristanetworks/avd/blob/devel/LICENSE"
 # VS Code settings: the remote user, the script that starts sshd and the extensions to install.
 LABEL devcontainer.metadata='[{"remoteUser":"avd"},{"entrypoint":"/usr/local/share/ssh-init.sh"},{"customizations":{"vscode":{"extensions":["ms-python.python","ms-python.vscode-pylance","mechatroner.rainbow-csv","oderwat.indent-rainbow","pomdtr.excalidraw-editor"]}}}]'
 

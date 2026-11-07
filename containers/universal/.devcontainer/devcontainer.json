@@ -12,7 +12,8 @@
             "ANSIBLE_CORE_VERSION": "${localEnv:ANSIBLE_CORE_VERSION}",
             "USERNAME": "${localEnv:USERNAME}",
             "RFC3339_TIMESTAMP": "${localEnv:RFC3339_TIMESTAMP}",
-            "IMAGE_VERSION": "${localEnv:IMAGE_VERSION}"
+            "IMAGE_VERSION": "${localEnv:IMAGE_VERSION}",
+            "IMAGE_NAME": "${localEnv:IMAGE_NAME}"
         }
     },
     "features": {

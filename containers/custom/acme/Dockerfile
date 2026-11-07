@@ -60,7 +60,7 @@ RUN VER=$(curl -s "https://api.github.com/repos/cli/cli/releases/latest" | jq -r
 #     && rm -f "age-${AGE_VERSION}-linux-${TARGETARCH}.tar.gz"
 
 ### Fetch latest release, download, install, and clean up in a single layer of age cli
-# Arista uses a Debian/Ubuntu base image
+# The AVD base image is Debian based
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN AGE_LATEST_VERSION=$(curl -s "https://api.github.com/repos/FiloSottile/age/releases/latest" | jq -r '.tag_name') && \
     echo "Installing AGE version [${AGE_LATEST_VERSION}] for [${TARGETARCH}]" && \
@@ -83,7 +83,7 @@ RUN update-ca-certificates
 ENV REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
 ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 
-# Switch back to the Arista base image's 'avd' user 
+# Switch back to the AVD base image's 'avd' user
 USER avd
 
 # Install 'yamllint'
@@ -95,4 +95,4 @@ RUN awk 1 /usr/local/share/ca-certificates/*.crt >> "$(python3 -m certifi)"
 # Fix keyboard issue with vi
 COPY --chown=avd:avd vimrc /home/avd/.vimrc
 
-### ⛔ DO NOT ADD THE COMMAND 'ENTRYPOINT' ⛔, it will be inherited from the Arista base image
+### ⛔ DO NOT ADD THE COMMAND 'ENTRYPOINT' ⛔, it will be inherited from the AVD base image

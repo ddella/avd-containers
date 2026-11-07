@@ -7,17 +7,21 @@ FROM ${FROM_IMAGE}:${FROM_VARIANT}
 ARG RFC3339_TIMESTAMP
 # Image version will be set by the build workflow
 ARG IMAGE_VERSION
+# Full image name, for example ghcr.io/ddella/avd-containers/avd6.5.0-python3.14:latest
+ARG IMAGE_NAME
 # set labels
-LABEL org.opencontainers.image.description="AVD universal image with pre-installed AVD collection. The image is still in preview and under active development."
-LABEL com.arista.license_terms="https://github.com/aristanetworks/avd/blob/devel/LICENSE"
+LABEL org.opencontainers.image.title="AVD container"
+LABEL org.opencontainers.image.description="Personal community image with Arista AVD pre-installed. Not affiliated with or supported by Arista Networks."
+LABEL org.opencontainers.image.authors="Daniel Della-Noce"
+LABEL org.opencontainers.image.vendor="Daniel Della-Noce"
+LABEL org.opencontainers.image.url="https://github.com/ddella/avd-containers"
+LABEL org.opencontainers.image.source="https://github.com/ddella/avd-containers"
+LABEL org.opencontainers.image.documentation="https://github.com/ddella/avd-containers"
 LABEL org.opencontainers.image.licenses="Apache-2.0"
-LABEL org.opencontainers.image.authors="Arista PS Daniel Della-Noce <daniel.dellanoce@arista.com>"
-LABEL org.opencontainers.image.url="https://github.com/orgs/aristanetworks/packages?repo_name=avd"
-LABEL org.opencontainers.image.documentation="https://avd.arista.com/"
-LABEL org.opencontainers.image.source="https://github.com/aristanetworks/avd/tree/devel/containers"
 LABEL org.opencontainers.image.created=${RFC3339_TIMESTAMP}
 LABEL org.opencontainers.image.version=${IMAGE_VERSION}
-LABEL org.opencontainers.image.vendor="Arista Networks"
+LABEL io.github.ddella.avd.license_terms="https://github.com/aristanetworks/avd/blob/devel/LICENSE"
+LABEL io.github.ddella.avd.image=${IMAGE_NAME}
 
 ARG PYAVD_INSTALL_LOCATION
 ARG ANSIBLE_INSTALL_LOCATION

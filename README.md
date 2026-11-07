@@ -4,6 +4,16 @@ A small container image for working with [Arista AVD](https://avd.arista.com/). 
 
 It's a customised build of Arista's `ghcr.io/aristanetworks/avd/universal` image, rebuilt from one Dockerfile to be smaller. It installs AVD unmodified from [aristanetworks/avd](https://github.com/aristanetworks/avd).
 
+## AVD 6.5.0+ dependency chain
+
+AVD 6.5.0+ dependency chain, from each collection's upstream galaxy.yml, is:
+```text
+arista.avd 6.5.0
+└── arista.eos >=12.2.0
+    └── ansible.netcommon >=8.5.2
+        └── ansible.utils >=3.0.0
+```
+
 ## Quick start
 
 Run this from your AVD project folder:
