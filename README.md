@@ -28,7 +28,7 @@ You land in a zsh prompt as the `avd` user, ready to run `ansible-playbook`. The
 
 ## Images and tags
 
-Each combination of AVD and Python is published as its own package, named `avd<avd-version>-python<python-version>`, for example `avd6.4.0-python3.12`. AVD 6.4.0 and 6.5.0 are available, with Python 3.10 to 3.14.
+Each combination of AVD and Python is published as its own package, named `avd<avd-version>-python<python-version>`, for example `avd6.4.0-python3.12`. AVD 6.3.0, 6.4.0 and 6.5.0 are available, with Python 3.10 to 3.14.
 
 Tags use `<year>.<month>.<build-number>`. The build number keeps increasing across months.
 
@@ -46,7 +46,7 @@ Tags use `<year>.<month>.<build-number>`. The build number keeps increasing acro
 | Debian | 13 (trixie), slim |
 | Python | 3.10 to 3.14, depending on the image |
 | `pyavd` with Ansible extras | Matches the image's AVD version |
-| `arista.avd` collection | 6.4.0 or 6.5.0 |
+| `arista.avd` collection | 6.3.0, 6.4.0 or 6.5.0 |
 | `arista.eos` collection | 12.3.0 |
 | `ansible.netcommon` collection | 8.7.1 |
 | `ansible.utils` collection | 6.1.1 |
@@ -111,10 +111,49 @@ gh workflow run container_build_native.yml --ref main -f python_version=3.14 -f 
 gh run watch
 ```
 
-`python_version` accepts 3.10 to 3.14, and `avd_version` accepts `v6.4.0` or `v6.5.0`.
+`python_version` accepts 3.10 to 3.14, and `avd_version` accepts `v6.3.0`, `v6.4.0` or `v6.5.0`.
 
 > [!IMPORTANT]
 > Python 3.15 isn't supported yet.
+
+## Linting the Dockerfiles
+
+[hadolint](https://github.com/hadolint/hadolint) checks Dockerfiles for common mistakes, and the shell code in `RUN` lines with ShellCheck. Run it with its Docker image from the root of the repository, so nothing needs to be installed:
+
+```bash
+cd "$(git rev-parse --show-toplevel)"
+docker run --rm -v "$PWD":/work:ro -w /work hadolint/hadolint:v2.15.1 \
+  hadolint --config .hadolint.yaml $(find . -name Dockerfile -not -path './.git/*')
+```
+
+The `cd` moves to the repository root first. Only the current folder is mounted, so from a subfolder hadolint couldn't see `.hadolint.yaml` or the other Dockerfiles.
+
+The repository is mounted read-only, and `find` lists every file named `Dockerfile`. Each finding shows the file, line, rule and severity, for example:
+
+```text
+./containers/avd/Dockerfile:85 SC2016 info: Expressions don't expand in single quotes, use double quotes for that.
+```
+
+To lint a single file, give its path instead of the `find` command:
+
+```bash
+cd "$(git rev-parse --show-toplevel)"
+docker run --rm -v "$PWD":/work:ro -w /work hadolint/hadolint:v2.15.1 \
+  hadolint --config .hadolint.yaml containers/custom/acme/Dockerfile
+```
+
+### Ignored rules
+
+Some rules flag choices this project makes on purpose. They're turned off in [`.hadolint.yaml`](https://github.com/ddella/avd-containers/blob/main/.hadolint.yaml), which the commands above pass with `--config`:
+
+| Rule | What it flags | Why it's ignored |
+|---|---|---|
+| `DL3007` | `FROM` an image tagged `latest` | The ACME image always builds on the latest AVD image |
+| `DL3008` | `apt-get install` without pinned versions | Debian packages are upgraded on every build |
+| `DL3013` | `pip install` without pinned versions | `pip`, `certifi` and `yamllint` are kept up to date |
+| `DL3066` | `USER` with a name instead of a numeric ID | The images use the named `avd` user, which exists in the image |
+
+To ignore a rule for one run only, add `--ignore <rule>`, for example `hadolint --ignore SC2016 ...`. The full list of rules is in the [hadolint README](https://github.com/hadolint/hadolint#rules).
 
 ## License
 

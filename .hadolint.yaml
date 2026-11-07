@@ -1,0 +1,11 @@
+# hadolint configuration, read automatically when hadolint runs from the repository root.
+# https://github.com/hadolint/hadolint#configure
+ignored:
+  # Latest version in 'FROM:'.
+  - DL3007
+  # Pin versions in apt-get install: Debian packages are upgraded on every build.
+  - DL3008
+  # Pin versions in pip install: pip, certifi and yamllint are kept up to date.
+  - DL3013
+  # Non-numeric user ID: the images use the named 'avd' user, which exists in the image.
+  - DL3066

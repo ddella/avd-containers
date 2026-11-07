@@ -1,8 +1,8 @@
 ---
-# Builds the universal image for amd64 and arm64 on native runners (no QEMU).
+# Builds the AVD image for amd64 and arm64 on native runners (no QEMU).
 # The image is built from containers/avd. The avd_version input is the AVD release installed in it.
 
-name: Build universal container (native runners)
+name: Build AVD container (native runners)
 
 "on":
   workflow_dispatch:

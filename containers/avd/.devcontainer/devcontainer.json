@@ -1,0 +1,19 @@
+// Builds containers/avd/Dockerfile locally and opens it as a dev container.
+// For format details, see https://aka.ms/devcontainer.json.
+// Set PYTHON_VERSION and AVD_VERSION in your shell to build another combination, for example:
+//   export PYTHON_VERSION=3.13 AVD_VERSION=v6.4.0
+// The remote user ('avd'), the SSH entrypoint and the VS Code extensions come from the image's
+// devcontainer.metadata label, so they aren't repeated here.
+{
+    "name": "AVD (local build)",
+    "build": {
+        "dockerfile": "../Dockerfile",
+        "context": "..",
+        "args": {
+            "PYTHON_VERSION": "${localEnv:PYTHON_VERSION:3.14}",
+            "AVD_VERSION": "${localEnv:AVD_VERSION:v6.5.0}",
+            "IMAGE_VERSION": "${localEnv:IMAGE_VERSION:local}",
+            "RFC3339_TIMESTAMP": "${localEnv:RFC3339_TIMESTAMP}"
+        }
+    }
+}

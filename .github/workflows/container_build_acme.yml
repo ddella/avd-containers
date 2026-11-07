@@ -2,9 +2,9 @@
 # Builds the ACME image for amd64 and arm64 on native runners (no QEMU).
 # The image is built from containers/custom/acme, on top of the base image in its Dockerfile.
 
-# The ACME workflow now looks up the latest 'gh', 'glab', 'age' and 'yq' versions on every build and passes
-# them to docker build. The Dockerfile is unchanged, so its pinned ARG values are still the defaults
-# for local builds.
+# The latest 'gh', 'glab', 'age' and 'yq' versions are looked up once and passed to docker build,
+# so the amd64 and arm64 images get the same versions. Local builds without these build args
+# look up the latest versions themselves (the Dockerfile defaults are "latest").
 
 name: Build ACME container (native runners)
 
@@ -102,7 +102,7 @@ jobs:
       - name: Check image 🔍
         run: |
           docker run --rm "$IMAGE_NAME:$IMAGE_TAG-$ARCH" \
-            sh -c 'whoami; uname -m; gh --version | head -1; age --version; yq --version; yamllint --version; ls /usr/local/share/ca-certificates; ansible-galaxy collection list arista.avd'
+            sh -c 'whoami; uname -m; gh --version | head -1; glab --version; age --version; yq --version; yamllint --version; ls /usr/local/share/ca-certificates; ansible-galaxy collection list arista.avd'
 
       - name: Push image 🚀
         run: docker push "$IMAGE_NAME:$IMAGE_TAG-$ARCH"
