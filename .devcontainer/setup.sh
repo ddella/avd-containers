@@ -4,7 +4,8 @@
 
 ### Change the Theme
 # https://github.com/ohmyzsh/ohmyzsh/wiki/themes
-sed -i "s/^ZSH_THEME=.*/ZSH_THEME=philips/" ~/.zshrc
+# sed -i "s/^ZSH_THEME=.*/ZSH_THEME=philips/" ~/.zshrc
+sed -i "s/^ZSH_THEME=.*/ZSH_THEME=robbyrussell/" ~/.zshrc
 
 ### Apply the custom Zsh prompt and remove the right prompt
 cat << 'EOF' >> ~/.zshrc
@@ -26,5 +27,18 @@ EOF
 # To see a flat list of all nested city/region files: find /usr/share/zoneinfo/ -type f
 sudo ln -fs /usr/share/zoneinfo/America/Montreal /etc/localtime
 sudo dpkg-reconfigure --frontend noninteractive tzdata
+
+# Add the 'avd' user to the 'docker' group
+# ⛔⛔⛔ DON'T DO THAT ⛔⛔⛔
+# Get the GID of the 'avd' group
+# AVD_GID=$(getent group avd | cut -d: -f3)
+# echo "The GID of group avd is: $AVD_GID"
+
+# SOCK_GID=$(stat -c "%g" /var/run/docker.sock)
+# echo "The GID is: $SOCK_GID"
+# sudo groupadd -g $SOCK_GID docker
+# sudo groupmod -g $AVD_GID docker
+# sudo usermod -aG docker $USER
+# sudo newgrp docker
 
 exit 0

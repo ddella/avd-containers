@@ -3,15 +3,17 @@
 //
 {
 "name": "ACME NetDevOps AVD SANDBOX Lab",
-  "image": "ghcr.io/nxt-ACME-com/avd-6.4.0-py3.14:latest",
-  "initializeCommand": "docker pull ghcr.io/nxt-ACME-com/avd-6.4.0-py3.14:latest",
+  "image": "ghcr.io/ddella/avd-containers/acme-avd6.4.0-python3.14:latest",
+  "initializeCommand": "docker pull ghcr.io/ddella/avd-containers/acme-avd6.4.0-python3.14:latest",
   "features": {
     "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
       "version": "latest",
+      "moby": false,
       "dockerDashComposeVersion": "v2"
     }
   },
 
+  "onCreateCommand": "zsh .devcontainer/get-certs.sh",
   "postCreateCommand": "zsh .devcontainer/setup.sh",
   "postStartCommand": "zsh .devcontainer/check-update.sh",
 
