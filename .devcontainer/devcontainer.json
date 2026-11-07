@@ -1,6 +1,12 @@
-//
-// https://containers.dev/implementors/json_reference/
-//
+/*
+https://containers.dev/implementors/json_reference/
+
+⚠️ If you need to change the "image" name ⚠️
+Keeping the image name in sync: it now appears in 3 places in the same file.
+When you bump the version, update all 3. A find-and-replace on 'acme-avd6.5.0-python3.14'
+covers it.
+
+*/
 {
 "name": "ACME NetDevOps AVD SANDBOX Lab",
   "image": "ghcr.io/ddella/avd-containers/acme-avd6.5.0-python3.14:latest",
@@ -13,9 +19,25 @@
     }
   },
 
-  "onCreateCommand": "zsh .devcontainer/get-certs.sh",
-  "postCreateCommand": "zsh .devcontainer/setup.sh",
+  // Lifecycle order: initializeCommand (host) → onCreateCommand → updateContentCommand
+  //   → postCreateCommand → postStartCommand → postAttachCommand
+  // VS Code waits for onCreateCommand before connecting, so the first terminal gets the shell setup.
+  // The object form runs both scripts in parallel (they don't depend on each other).
+  "onCreateCommand": {
+    "certs": "zsh .devcontainer/get-certs.sh",
+    "shell": "zsh .devcontainer/setup.sh"
+  },
+  // Runs on every start: compares the image pulled by initializeCommand with the running container
   "postStartCommand": "zsh .devcontainer/check-update.sh",
+
+  "containerEnv": {
+    // Timezone without sudo/dpkg-reconfigure (tzdata is in the image)
+    "TZ": "America/Montreal",
+    // AGE private key, available to every process (not only zsh)
+    "AGE_PRIVATE_KEY": "/home/avd/.ssh/id_ed25519_avd",
+    // Read by check-update.sh. ⚠️ Keep in sync with "image" and "initializeCommand"
+    "DEVCONTAINER_IMAGE": "ghcr.io/ddella/avd-containers/acme-avd6.5.0-python3.14:latest"
+  },
 
   // tells the container to share the kernel's hostname namespace with your local machine
   "runArgs": ["--uts=host"],

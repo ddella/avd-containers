@@ -18,15 +18,10 @@ ZSH_THEME_GIT_PROMPT_UNTRACKED="%{$fg[cyan]%} %{%G✭%}"
 
 PROMPT='%{$fg[blue]%}%B%c/%b%{$reset_color%} $(git_prompt_info)%(!.#.$) '
 RPROMPT=''
-
-### Export the AGE private key variable for all Zsh sessions
-export AGE_PRIVATE_KEY="/home/avd/.ssh/id_ed25519_avd"
 EOF
 
-### Set the timezone
-# To see a flat list of all nested city/region files: find /usr/share/zoneinfo/ -type f
-sudo ln -fs /usr/share/zoneinfo/America/Montreal /etc/localtime
-sudo dpkg-reconfigure --frontend noninteractive tzdata
+# The timezone (TZ) and AGE_PRIVATE_KEY are set in "containerEnv" in devcontainer.json.
+# To list the valid timezone names: find /usr/share/zoneinfo/ -type f
 
 # Add the 'avd' user to the 'docker' group
 # ⛔⛔⛔ DON'T DO THAT ⛔⛔⛔

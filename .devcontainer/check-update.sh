@@ -6,17 +6,13 @@
 # currently running container to alert the user if a rebuild is necessary.
 # ==============================================================================
 
-# Dynamically pull the IMAGE variable directly from the devcontainer.json
-DEV_JSON=".devcontainer/devcontainer.json"
-# Strip // comments using sed, then extract the raw string value of .image
-# Caveat: You can use the multiline comment: /* ... */
-IMAGE=$(sed 's|//.*||g' "$DEV_JSON" | jq -r '.image')
+# The image name comes from "containerEnv" in .devcontainer/devcontainer.json.
+# This avoids parsing JSONC (comments) with sed/jq.
+IMAGE="$DEVCONTAINER_IMAGE"
 
-# IMAGE="ghcr.io/nxt-ACME-com/avd-6.4.0-py3.14:latest"
-
-# Safety check: ensure jq successfully found the image property
-if [ -z "$IMAGE" ] || [ "$IMAGE" = "null" ]; then
-  echo -e "\033[1;31m ❌ ERROR: Could not parse the 'image' property from $DEV_JSON \033[0m"
+# Safety check: ensure the variable is set
+if [ -z "$IMAGE" ]; then
+  echo -e "\033[1;31m ❌ ERROR: DEVCONTAINER_IMAGE is not set. Add it to \"containerEnv\" in .devcontainer/devcontainer.json \033[0m"
   exit 1
 fi
 
@@ -31,7 +27,7 @@ fi
 LATEST_TIME=$(sudo docker inspect -f '{{index .Config.Labels "org.opencontainers.image.created"}}' $IMAGE 2>/dev/null)
 # Get the creation timestamp from the currently running Dev Container
 # (Inside a Dev Container, $HOSTNAME inherently resolves to the container's short ID)
-# ⛔ Don't change the $HOSTNAME ⛔
+# ⛔ Don't change the variable $HOSTNAME in the container ⛔
 CURRENT_TIME=$(sudo docker inspect -f '{{index .Config.Labels "org.opencontainers.image.created"}}' $HOSTNAME 2>/dev/null)
 
 # echo "LATEST_TIME:  [$LATEST_TIME]"
