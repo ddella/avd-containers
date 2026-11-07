@@ -39,6 +39,52 @@ Tags use `<year>.<month>.<build-number>`. The build number keeps increasing acro
 | `2026.11.9-amd64` | `linux/amd64` only |
 | `2026.11.9-arm64` | `linux/arm64` only |
 
+## Pulling and testing the images
+
+### The AVD image
+
+Pull the AVD image from the GitHub Container Registry and print its Debian, Python and AVD versions:
+
+```bash
+docker pull ghcr.io/ddella/avd-containers/avd6.5.0-python3.14:latest
+docker run --rm ghcr.io/ddella/avd-containers/avd6.5.0-python3.14:latest \
+  sh -c 'grep DEBIAN_VERSION_FULL /etc/os-release; python --version; ansible-galaxy collection list | grep arista.avd'
+```
+
+Output:
+
+```text
+DEBIAN_VERSION_FULL=13.7
+Python 3.14.10
+arista.avd        6.5.0
+```
+
+### The ACME image
+
+Pull the [ACME image](#customising-the-image-the-acme-example) and print the same versions, plus the tools it adds:
+
+```bash
+docker pull ghcr.io/ddella/avd-containers/acme-avd6.5.0-python3.14:latest
+docker run --rm ghcr.io/ddella/avd-containers/acme-avd6.5.0-python3.14:latest \
+  sh -c 'grep DEBIAN_VERSION_FULL /etc/os-release; python --version; ansible-galaxy collection list | grep arista.avd; gh --version | head -1; glab --version; age --version; yq --version'
+```
+
+Output:
+
+```text
+DEBIAN_VERSION_FULL=13.7
+Python 3.14.10
+arista.avd        6.5.0
+gh version 2.103.3 (2026-10-26)
+glab 1.128.0 (519ea19f7)
+v1.3.2
+yq (https://github.com/mikefarah/yq/) version v4.54.2
+```
+
+The last four lines are `gh`, `glab`, `age` and `yq`. Your versions may be newer, because the ACME image installs the latest release of each tool when it's built.
+
+To test another combination, change `avd6.5.0-python3.14` in both commands, for example to `avd6.4.0-python3.13`.
+
 ## What's included
 
 | Component | Version |
