@@ -1,6 +1,7 @@
 ---
 # Builds the ACME image for amd64 and arm64 on native runners (no QEMU).
-# The image is built from containers/custom/acme, on top of the base image in its Dockerfile.
+# The image is built from containers/custom/acme, on top of the AVD image selected by the inputs.
+# The base image's 'latest' tag is resolved to a digest once, so amd64 and arm64 use the same base.
 
 # The latest 'gh', 'glab', 'age' and 'yq' versions are looked up once and passed to docker build,
 # so the amd64 and arm64 images get the same versions. Local builds without these build args
@@ -10,25 +11,66 @@ name: Build ACME container (native runners)
 
 "on":
   workflow_dispatch:
-
-env:
-  # Keep the AVD and Python versions the same as the FROM line in the Dockerfile.
-  IMAGE_NAME: ghcr.io/${{ github.repository }}/acme-avd6.4.0-python3.14
+    inputs:
+      python_version:
+        type: choice
+        required: true
+        description: "select Python version of the AVD base image"
+        options: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+        default: "3.14"
+      avd_version:
+        type: choice
+        required: true
+        description: "select AVD version of the AVD base image"
+        options: ["v6.3.0", "v6.4.0", "v6.5.0"]
+        default: "v6.5.0"
 
 jobs:
-  # Set the image tag and tool versions once, so all jobs use the same date and versions.
-  # Tag: <year>.<month>.<build number>
+  # Set the image name, tag, base image and tool versions once, so all jobs use the same values.
+  # Name: acme-avd<avd_version>-python<python_version>, tag: <year>.<month>.<build number>
   # gh and glab versions have no leading "v", age and yq versions keep it, as the Dockerfile expects.
   image_metadata:
     runs-on: ubuntu-24.04
-    permissions: {}
+    permissions:
+      # Read the base image's digest, also works if the package is private.
+      packages: read
     outputs:
+      image_name: ${{ steps.base.outputs.image_name }}
+      base_name: ${{ steps.base.outputs.base_name }}
+      base_digest: ${{ steps.base.outputs.base_digest }}
       image_tag: ${{ steps.metadata.outputs.image_tag }}
       gh_version: ${{ steps.metadata.outputs.gh_version }}
       glab_version: ${{ steps.metadata.outputs.glab_version }}
       age_version: ${{ steps.metadata.outputs.age_version }}
       yq_version: ${{ steps.metadata.outputs.yq_version }}
     steps:
+      - name: Login to GitHub Container Registry 🗝️
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set image name and resolve base image 🏷️
+        id: base
+        # Fails here if the AVD image for this AVD and Python combination hasn't been published.
+        shell: bash
+        env:
+          PYTHON_VERSION: ${{ inputs.python_version }}
+          AVD_VERSION: ${{ inputs.avd_version }}
+        run: |
+          suffix="avd${AVD_VERSION#v}-python$PYTHON_VERSION"
+          base_name="ghcr.io/$GITHUB_REPOSITORY/$suffix:latest"
+          if ! base_digest=$(docker buildx imagetools inspect "$base_name" --format '{{json .Manifest.Digest}}' | tr -d '"'); then
+            echo "::error::Base image $base_name not found. Build it first with container_build_native.yml."
+            exit 1
+          fi
+          {
+            echo "image_name=ghcr.io/$GITHUB_REPOSITORY/acme-$suffix"
+            echo "base_name=$base_name"
+            echo "base_digest=$base_digest"
+          } | tee -a "$GITHUB_OUTPUT"
+
       - name: Set image tag and tool versions 🏷️
         id: metadata
         # Explicit shell enables pipefail, so a failed lookup stops the job instead of giving an empty version.
@@ -62,7 +104,10 @@ jobs:
       contents: read
       packages: write
     env:
+      IMAGE_NAME: ${{ needs.image_metadata.outputs.image_name }}
       IMAGE_TAG: ${{ needs.image_metadata.outputs.image_tag }}
+      BASE_NAME: ${{ needs.image_metadata.outputs.base_name }}
+      BASE_DIGEST: ${{ needs.image_metadata.outputs.base_digest }}
       GH_VERSION: ${{ needs.image_metadata.outputs.gh_version }}
       GLAB_VERSION: ${{ needs.image_metadata.outputs.glab_version }}
       AGE_VERSION: ${{ needs.image_metadata.outputs.age_version }}
@@ -89,6 +134,9 @@ jobs:
         run: |
           docker build \
             --pull \
+            --build-arg "BASE_IMAGE=${BASE_NAME%:*}@$BASE_DIGEST" \
+            --build-arg "BASE_NAME=$BASE_NAME" \
+            --build-arg "BASE_DIGEST=$BASE_DIGEST" \
             --build-arg "IMAGE_VERSION=$IMAGE_TAG" \
             --build-arg "GH_VERSION=$GH_VERSION" \
             --build-arg "GLAB_VERSION=$GLAB_VERSION" \
@@ -113,6 +161,7 @@ jobs:
     permissions:
       packages: write
     env:
+      IMAGE_NAME: ${{ needs.image_metadata.outputs.image_name }}
       IMAGE_TAG: ${{ needs.image_metadata.outputs.image_tag }}
     steps:
       - name: Login to GitHub Container Registry 🗝️

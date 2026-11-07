@@ -1,9 +1,15 @@
 # ==========================================
 # STAGE 0: Final stage
 # ==========================================
-FROM ghcr.io/ddella/avd-containers/avd6.4.0-python3.14:latest
+# AVD base image. The build workflow passes the image pinned by digest (name@sha256:...),
+# so amd64 and arm64 use the same base. Local builds use this default.
+ARG BASE_IMAGE=ghcr.io/ddella/avd-containers/avd6.5.0-python3.14:latest
+FROM ${BASE_IMAGE}
 
 ARG TARGETARCH
+# Base image name and digest for the OCI base image labels, set by the build workflow
+ARG BASE_NAME=ghcr.io/ddella/avd-containers/avd6.5.0-python3.14:latest
+ARG BASE_DIGEST
 # Tool versions. "latest" looks up the newest release at build time.
 # The build workflow passes the exact versions, so amd64 and arm64 get the same ones.
 # gh and glab versions have no leading "v", age and yq versions keep it, for example v1.3.2.
@@ -16,6 +22,8 @@ ARG IMAGE_VERSION
 ARG RFC3339_TIMESTAMP
 
 LABEL org.opencontainers.image.description="AVD image for Acme"
+LABEL org.opencontainers.image.base.name=${BASE_NAME}
+LABEL org.opencontainers.image.base.digest=${BASE_DIGEST}
 LABEL com.acme.image.created=${RFC3339_TIMESTAMP}
 LABEL com.acme.image.version=${IMAGE_VERSION}
 

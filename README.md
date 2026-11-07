@@ -116,6 +116,71 @@ gh run watch
 > [!IMPORTANT]
 > Python 3.15 isn't supported yet.
 
+## Customising the image: the ACME example
+
+The AVD image is meant to be used as a base. Rather than changing it, build your own image `FROM` it and add what your team needs. [`containers/custom/acme`](https://github.com/ddella/avd-containers/tree/main/containers/custom/acme) is a worked example for a fictional company, ACME.
+
+### What ACME adds
+
+| Addition | Why |
+|---|---|
+| `gh` and `glab` | GitHub and GitLab CLIs |
+| `age` and `yq` | Encrypting secrets and editing YAML from the shell |
+| `yamllint` | Checking YAML files before running playbooks |
+| The company root CA (`certs/*.crt`) | Trusted by Debian, `pip`, `requests` and `certifi`, for networks that inspect TLS |
+| `vimrc` | A working numeric keypad in `vi`, and YAML-friendly indentation |
+
+The Dockerfile also has commented-out blocks for extra Debian packages and Python modules. Uncomment them and list what you need.
+
+### Rules for a custom image
+
+- **Switch users around admin tasks.** The base image runs as `avd`. Use `USER root` for `apt-get` and system files, then `USER avd` again before the end.
+- **Install Python packages as `avd`** with `pip install --user`, so they go in `~/.local` like AVD.
+- **Don't add `ENTRYPOINT`.** The base image's entrypoint, the `avd` user and the VS Code settings are inherited.
+- **Choose the base with `BASE_IMAGE`.** The Dockerfile starts with `ARG BASE_IMAGE=...` and `FROM ${BASE_IMAGE}`, so the same file builds on any AVD and Python combination.
+- **Tool versions default to `latest`.** `GH_VERSION`, `GLAB_VERSION`, `AGE_VERSION` and `YQ_VERSION` look up the newest release at build time. Pass a version to pin one, for example `--build-arg AGE_VERSION=v1.3.2`.
+
+### Build it locally
+
+The default base is `avd6.5.0-python3.14:latest`:
+
+```bash
+docker build --pull --tag acme:local containers/custom/acme
+```
+
+To build on another combination, pass the base image:
+
+```bash
+docker build --pull \
+  --build-arg BASE_IMAGE=ghcr.io/ddella/avd-containers/avd6.4.0-python3.13:latest \
+  --tag acme:local \
+  containers/custom/acme
+```
+
+Docker caches each step, so a rebuild keeps the tool versions from the last build. Add `--no-cache` to get the latest releases.
+
+### Build it with GitHub Actions
+
+The [`container_build_acme.yml`](https://github.com/ddella/avd-containers/blob/main/.github/workflows/container_build_acme.yml) workflow builds and publishes `acme-avd<avd-version>-python<python-version>`, with the same tags as the AVD images. Its inputs choose the base image:
+
+```bash
+gh workflow run container_build_acme.yml --ref main -f python_version=3.14 -f avd_version=v6.5.0
+gh run watch
+```
+
+The base image must already be published, so build it first with `container_build_native.yml`. The workflow looks up the base image's digest and the tool versions once, so the amd64 and arm64 images are identical. Each image records its base in the `org.opencontainers.image.base.name` and `org.opencontainers.image.base.digest` labels:
+
+```bash
+docker inspect ghcr.io/ddella/avd-containers/acme-avd6.5.0-python3.14:latest \
+  --format '{{ index .Config.Labels "org.opencontainers.image.base.digest" }}'
+```
+
+### Make your own
+
+1. Copy `containers/custom/acme` to `containers/custom/<name>`.
+2. Replace the certificate in `certs/` with yours, rename the `com.acme.*` labels, and remove or add tools in the Dockerfile.
+3. Copy `container_build_acme.yml`, then change the `acme-` image name prefix and the `containers/custom/acme` build path.
+
 ## Linting the Dockerfiles
 
 [hadolint](https://github.com/hadolint/hadolint) checks Dockerfiles for common mistakes, and the shell code in `RUN` lines with ShellCheck. Run it with its Docker image from the root of the repository, so nothing needs to be installed:
@@ -154,6 +219,35 @@ Some rules flag choices this project makes on purpose. They're turned off in [`.
 | `DL3066` | `USER` with a name instead of a numeric ID | The images use the named `avd` user, which exists in the image |
 
 To ignore a rule for one run only, add `--ignore <rule>`, for example `hadolint --ignore SC2016 ...`. The full list of rules is in the [hadolint README](https://github.com/hadolint/hadolint#rules).
+
+## Linting the workflows
+
+[actionlint](https://github.com/rhysd/actionlint) checks GitHub Actions workflows before you push them. It finds syntax errors, unknown inputs and outputs, wrong `${{ }}` expressions, and runs ShellCheck on every `run:` script. Its Docker image includes ShellCheck, so nothing needs to be installed:
+
+```bash
+cd "$(git rev-parse --show-toplevel)"
+docker run --rm -v "$PWD":/repo:ro -w /repo rhysd/actionlint:1.7.7 -no-color
+```
+
+With no file names, actionlint checks every file in `.github/workflows`. As with hadolint, run it from the repository root: from a subfolder, it can't find `.github/workflows` and fails with `no project was found`.
+
+No output and exit code 0 mean the workflows are clean. Otherwise each finding shows the file, line, column, the problem, and the code it points to, for example:
+
+```text
+.github/workflows/example.yml:6:23: property "nope" is not defined in object type {} [expression]
+  |
+6 |       - run: echo ${{ inputs.nope }} $FOO
+  |                       ^~~~~~~~~~~
+```
+
+To check a single workflow, add its path:
+
+```bash
+docker run --rm -v "$PWD":/repo:ro -w /repo rhysd/actionlint:1.7.7 -no-color \
+  .github/workflows/container_build_acme.yml
+```
+
+Drop `-no-color` to get colored output in a terminal.
 
 ## License
 
