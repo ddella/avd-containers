@@ -1,0 +1,96 @@
+---
+# Builds the AVD image for amd64 and arm64 on native runners (no QEMU).
+# The image is built from containers/avd. The AVD_VERSION variable is the AVD release installed in it.
+# GitLab port of .github/workflows/container_build_native.yml.
+# Run it from Build → Pipelines → Run pipeline, and pick the versions in the form.
+
+workflow:
+  name: "Build AVD container (native runners) - AVD $AVD_VERSION, Python $PYTHON_VERSION"
+  rules:
+    # Manual runs only, like workflow_dispatch.
+    - if: $CI_PIPELINE_SOURCE == "web"
+
+variables:
+  PYTHON_VERSION:
+    description: "select Python version"
+    value: "3.14"
+    options: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+  AVD_VERSION:
+    description: "select AVD version"
+    value: "v6.5.0"
+    options: ["v6.3.0", "v6.4.0", "v6.5.0"]
+
+stages:
+  - metadata
+  - build
+  - publish
+
+default:
+  image: docker:28.3.3
+
+# Set the image name and tag once, so all jobs use the same date.
+# Name: avd<avd_version>-python<python_version>, tag: <year>.<month>.<pipeline number>
+image_metadata:
+  stage: metadata
+  tags: [saas-linux-small-amd64]
+  script:
+    - |
+      {
+        echo "IMAGE_NAME=$CI_REGISTRY_IMAGE/avd${AVD_VERSION#v}-python$PYTHON_VERSION"
+        echo "IMAGE_TAG=$(date -u +%Y.%m).$CI_PIPELINE_IID"
+      } > image.env
+    - cat image.env
+  artifacts:
+    reports:
+      dotenv: image.env
+
+build_image:
+  stage: build
+  needs: [image_metadata]
+  parallel:
+    matrix:
+      - ARCH: amd64
+        RUNNER: saas-linux-small-amd64
+      - ARCH: arm64
+        RUNNER: saas-linux-small-arm64
+  tags: [$RUNNER]
+  services:
+    - docker:28.3.3-dind
+  variables:
+    DOCKER_TLS_CERTDIR: "/certs"
+    BUILDX_NO_DEFAULT_ATTESTATIONS: 1
+  before_script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login --username "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+  script:
+    # RFC 3339 timestamp for the org.opencontainers.image.created label (busybox date has no --rfc-3339).
+    - RFC3339_TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+    - |
+      docker build \
+        --pull \
+        --build-arg "PYTHON_VERSION=$PYTHON_VERSION" \
+        --build-arg "AVD_VERSION=$AVD_VERSION" \
+        --build-arg "IMAGE_VERSION=$IMAGE_TAG" \
+        --build-arg "RFC3339_TIMESTAMP=$RFC3339_TIMESTAMP" \
+        --label "org.opencontainers.image.source=$CI_PROJECT_URL" \
+        --tag "$IMAGE_NAME:$IMAGE_TAG-$ARCH" \
+        containers/avd
+    - |
+      docker run --rm "$IMAGE_NAME:$IMAGE_TAG-$ARCH" \
+        sh -c 'whoami; uname -m; python --version; pip show pyavd | grep ^Version; ansible-galaxy collection list arista.avd'
+    - docker push "$IMAGE_NAME:$IMAGE_TAG-$ARCH"
+
+publish_manifest:
+  stage: publish
+  needs: [image_metadata, build_image]
+  tags: [saas-linux-small-amd64]
+  # imagetools talks to the registry directly, so no Docker daemon (dind) is needed.
+  before_script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login --username "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+  script:
+    - |
+      docker buildx imagetools create \
+        --tag "$IMAGE_NAME:$IMAGE_TAG" \
+        --tag "$IMAGE_NAME:latest" \
+        "$IMAGE_NAME:$IMAGE_TAG-amd64" \
+        "$IMAGE_NAME:$IMAGE_TAG-arm64"
+    - docker buildx imagetools inspect "$IMAGE_NAME:$IMAGE_TAG"
