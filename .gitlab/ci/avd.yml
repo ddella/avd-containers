@@ -1,0 +1,48 @@
+# AVD image, built from containers/avd. Included by .gitlab-ci.yml, runs when the "image" input is "avd".
+# GitLab port of .github/workflows/container_build_native.yml.
+
+.avd_rules:
+  rules:
+    - if: $IMAGE == "avd"
+
+# Set the image name and tag once, so all jobs use the same date.
+# Name: avd<avd_version>-python<python_version>, tag: <year>.<month>.<pipeline number>
+avd_metadata:
+  extends: .avd_rules
+  stage: metadata
+  tags: [saas-linux-small-amd64]
+  script:
+    - |
+      {
+        echo "IMAGE_NAME=$CI_REGISTRY_IMAGE/avd${AVD_VERSION#v}-python$PYTHON_VERSION"
+        echo "IMAGE_TAG=$(date -u +%Y.%m).$CI_PIPELINE_IID"
+      } > image.env
+    - cat image.env
+  artifacts:
+    reports:
+      dotenv: image.env
+
+avd_build:
+  extends: [.native_build, .avd_rules]
+  needs: [avd_metadata]
+  script:
+    # RFC 3339 timestamp for the org.opencontainers.image.created label (busybox date has no --rfc-3339).
+    - RFC3339_TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+    - |
+      docker build \
+        --pull \
+        --build-arg "PYTHON_VERSION=$PYTHON_VERSION" \
+        --build-arg "AVD_VERSION=$AVD_VERSION" \
+        --build-arg "IMAGE_VERSION=$IMAGE_TAG" \
+        --build-arg "RFC3339_TIMESTAMP=$RFC3339_TIMESTAMP" \
+        --label "org.opencontainers.image.source=$CI_PROJECT_URL" \
+        --tag "$IMAGE_NAME:$IMAGE_TAG-$ARCH" \
+        containers/avd
+    - |
+      docker run --rm "$IMAGE_NAME:$IMAGE_TAG-$ARCH" \
+        sh -c 'whoami; uname -m; python --version; pip show pyavd | grep ^Version; ansible-galaxy collection list arista.avd'
+    - docker push "$IMAGE_NAME:$IMAGE_TAG-$ARCH"
+
+avd_publish:
+  extends: [.publish_manifest, .avd_rules]
+  needs: [avd_metadata, avd_build]

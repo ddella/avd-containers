@@ -1,0 +1,95 @@
+# ACME image, built from containers/custom/acme on top of the AVD image selected by the inputs.
+# Included by .gitlab-ci.yml, runs when the "image" input is "acme".
+# GitLab port of .github/workflows/container_build_acme.yml.
+#
+# The base image comes from this project's GitLab registry, so build the matching avd image first.
+# Its 'latest' tag is resolved to a digest once, so amd64 and arm64 use the same base.
+#
+# The latest 'gh', 'glab', 'age' and 'yq' versions are looked up once and passed to docker build,
+# so the amd64 and arm64 images get the same versions. Local builds without these build args
+# look up the latest versions themselves (the Dockerfile defaults are "latest").
+
+.acme_rules:
+  rules:
+    - if: $IMAGE == "acme"
+
+# Set the image name, tag, base image and tool versions once, so all jobs use the same values.
+# Name: acme-avd<avd_version>-python<python_version>, tag: <year>.<month>.<pipeline number>
+# gh and glab versions have no leading "v", age and yq versions keep it, as the Dockerfile expects.
+acme_metadata:
+  extends: [.registry_login, .acme_rules]
+  stage: metadata
+  tags: [saas-linux-small-amd64]
+  script:
+    # pipefail: a failed lookup stops the job instead of giving an empty version.
+    - set -eo pipefail
+    - apk add --no-cache curl jq
+    - suffix="avd${AVD_VERSION#v}-python$PYTHON_VERSION"
+    - BASE_NAME="$CI_REGISTRY_IMAGE/$suffix:latest"
+    # Fails here if the AVD image for this AVD and Python combination hasn't been published.
+    - |
+      if ! BASE_DIGEST=$(docker buildx imagetools inspect "$BASE_NAME" --format '{{json .Manifest.Digest}}' | tr -d '"'); then
+        echo "ERROR: Base image $BASE_NAME not found. Build it first with the image input set to avd."
+        exit 1
+      fi
+    # GitHub's releases/latest page redirects to .../releases/tag/<tag>. Reading the redirect needs no
+    # API token, so it isn't hit by the API rate limit that GitLab's shared runner IPs often reach.
+    - |
+      github_latest() {
+        curl -fsSLI -o /dev/null -w '%{url_effective}' "https://github.com/$1/releases/latest" | sed 's|.*/tag/||'
+      }
+    - GH_VERSION=$(github_latest cli/cli | sed 's/^v//')
+    - GLAB_VERSION=$(curl -fsSL https://gitlab.com/api/v4/projects/gitlab-org%2Fcli/releases/permalink/latest | jq -r '.tag_name | ltrimstr("v")')
+    - AGE_VERSION=$(github_latest FiloSottile/age)
+    - YQ_VERSION=$(github_latest mikefarah/yq)
+    - |
+      {
+        echo "IMAGE_NAME=$CI_REGISTRY_IMAGE/acme-$suffix"
+        echo "IMAGE_TAG=$(date -u +%Y.%m).$CI_PIPELINE_IID"
+        echo "BASE_NAME=$BASE_NAME"
+        echo "BASE_DIGEST=$BASE_DIGEST"
+        echo "GH_VERSION=$GH_VERSION"
+        echo "GLAB_VERSION=$GLAB_VERSION"
+        echo "AGE_VERSION=$AGE_VERSION"
+        echo "YQ_VERSION=$YQ_VERSION"
+      } > image.env
+    - cat image.env
+    # An empty value means a lookup failed: stop here instead of building with a missing version.
+    - |
+      if grep -E '=$' image.env; then
+        echo "ERROR: A value above is empty."
+        exit 1
+      fi
+  artifacts:
+    reports:
+      dotenv: image.env
+
+acme_build:
+  extends: [.native_build, .acme_rules]
+  needs: [acme_metadata]
+  script:
+    # RFC 3339 timestamp for the com.acme.image.created label (busybox date has no --rfc-3339).
+    - RFC3339_TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+    - |
+      docker build \
+        --pull \
+        --build-arg "BASE_IMAGE=${BASE_NAME%:*}@$BASE_DIGEST" \
+        --build-arg "BASE_NAME=$BASE_NAME" \
+        --build-arg "BASE_DIGEST=$BASE_DIGEST" \
+        --build-arg "IMAGE_VERSION=$IMAGE_TAG" \
+        --build-arg "GH_VERSION=$GH_VERSION" \
+        --build-arg "GLAB_VERSION=$GLAB_VERSION" \
+        --build-arg "AGE_VERSION=$AGE_VERSION" \
+        --build-arg "YQ_VERSION=$YQ_VERSION" \
+        --build-arg "RFC3339_TIMESTAMP=$RFC3339_TIMESTAMP" \
+        --label "org.opencontainers.image.source=$CI_PROJECT_URL" \
+        --tag "$IMAGE_NAME:$IMAGE_TAG-$ARCH" \
+        containers/custom/acme
+    - |
+      docker run --rm "$IMAGE_NAME:$IMAGE_TAG-$ARCH" \
+        sh -c 'whoami; uname -m; gh --version | head -1; glab --version; age --version; yq --version; yamllint --version; ls /usr/local/share/ca-certificates; ansible-galaxy collection list arista.avd'
+    - docker push "$IMAGE_NAME:$IMAGE_TAG-$ARCH"
+
+acme_publish:
+  extends: [.publish_manifest, .acme_rules]
+  needs: [acme_metadata, acme_build]
