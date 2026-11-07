@@ -66,7 +66,7 @@ Pull the [ACME image](#customising-the-image-the-acme-example) and print the sam
 ```bash
 docker pull ghcr.io/ddella/avd-containers/acme-avd6.5.0-python3.14:latest
 docker run --rm ghcr.io/ddella/avd-containers/acme-avd6.5.0-python3.14:latest \
-  sh -c 'grep DEBIAN_VERSION_FULL /etc/os-release; python --version; ansible-galaxy collection list | grep arista.avd; gh --version | head -1; glab --version; age --version; yq --version'
+  sh -c 'grep PRETTY_NAME /etc/os-release; grep DEBIAN_VERSION_FULL /etc/os-release; python --version; ansible-galaxy collection list | grep arista.avd; gh --version | head -1; glab --version; age --version; yq --version'
 ```
 
 Output:
