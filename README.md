@@ -162,6 +162,66 @@ gh run watch
 > [!IMPORTANT]
 > Python 3.15 isn't supported yet.
 
+## GitLab
+
+The repository is mirrored to [gitlab.com/ddella/avd-containers](https://gitlab.com/ddella/avd-containers), where [`.gitlab-ci.yml`](https://github.com/ddella/avd-containers/blob/main/.gitlab-ci.yml) builds the same AVD image. It runs on GitLab's hosted amd64 and arm64 runners and publishes to the GitLab container registry. Image names and tags follow the same rules as on GitHub.
+
+Pushing doesn't start a build. Builds start only when you run the pipeline yourself, from the web page or with the [`glab`](https://gitlab.com/gitlab-org/cli) CLI.
+
+### Build the image
+
+**Web page:**
+
+1. Open [Build → Pipelines → New pipeline](https://gitlab.com/ddella/avd-containers/-/pipelines/new).
+2. Select the `main` branch.
+3. Under **Inputs**, choose `python_version` and `avd_version`.
+4. Select **New pipeline**.
+
+**CLI:**
+
+```bash
+glab ci run -R ddella/avd-containers --branch main \
+  --input python_version:3.14 --input avd_version:v6.5.0
+glab ci status -R ddella/avd-containers --branch main --live
+```
+
+The inputs accept the same values as the GitHub workflow. Inputs you leave out use their defaults, `3.14` and `v6.5.0`.
+
+The pipeline runs three stages: `image_metadata` sets the image name and tag, two `build_image` jobs build and test the amd64 and arm64 images, and `publish_manifest` joins them into one multi-arch image.
+
+### Look at the registry
+
+**Web page:** open [Deploy → Container Registry](https://gitlab.com/ddella/avd-containers/container_registry). Each AVD and Python combination is its own repository, for example `avd6.5.0-python3.14`. Open one to see its tags.
+
+**CLI:** list the repositories, then list the tags of one, using its ID from the first command:
+
+```bash
+glab container-registry repository list -R ddella/avd-containers
+glab container-registry tag list <repository-id> -R ddella/avd-containers
+```
+
+Each build adds four tags: `<year>.<month>.<pipeline-number>-amd64`, `-arm64`, the multi-arch `<year>.<month>.<pipeline-number>`, and `latest`. The pipeline number is the `#` number shown on the Pipelines page.
+
+To see which architectures a multi-arch tag contains:
+
+```bash
+docker buildx imagetools inspect registry.gitlab.com/ddella/avd-containers/avd6.5.0-python3.14:latest
+```
+
+### Pull the image
+
+```bash
+docker pull registry.gitlab.com/ddella/avd-containers/avd6.5.0-python3.14:latest
+```
+
+Docker picks the amd64 or arm64 image for your machine. Use it exactly like the GitHub image: replace `ghcr.io/ddella/avd-containers` with `registry.gitlab.com/ddella/avd-containers` in the other commands in this README.
+
+If the project is private, log in first. Use your GitLab username, and a [personal access token](https://gitlab.com/-/user_settings/personal_access_tokens) with the `read_registry` scope as the password:
+
+```bash
+docker login registry.gitlab.com
+```
+
 ## Customising the image: the ACME example
 
 The AVD image is meant to be used as a base. Rather than changing it, build your own image `FROM` it and add what your team needs. [`containers/custom/acme`](https://github.com/ddella/avd-containers/tree/main/containers/custom/acme) is a worked example for a fictional company, ACME.

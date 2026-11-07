@@ -17,8 +17,9 @@ spec:
 workflow:
   name: "Build AVD container (native runners) - AVD $[[ inputs.avd_version ]], Python $[[ inputs.python_version ]]"
   rules:
-    # Manual runs only, like workflow_dispatch.
+    # Manual runs only, like workflow_dispatch: "web" is the GUI, "api" is glab ci run.
     - if: $CI_PIPELINE_SOURCE == "web"
+    - if: $CI_PIPELINE_SOURCE == "api"
 
 variables:
   PYTHON_VERSION: "$[[ inputs.python_version ]]"
