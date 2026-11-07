@@ -24,7 +24,7 @@ jobs:
   # Set the image name and tag once, so all jobs use the same date.
   # Name: avd<avd_version>-python<python_version>, tag: <year>.<month>.<build number>
   image_metadata:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     permissions: {}
     outputs:
       image_name: ${{ steps.metadata.outputs.image_name }}
@@ -47,9 +47,9 @@ jobs:
       matrix:
         include:
           - arch: amd64
-            runner: ubuntu-24.04
+            runner: ubuntu-26.04
           - arch: arm64
-            runner: ubuntu-24.04-arm
+            runner: ubuntu-26.04-arm
     runs-on: ${{ matrix.runner }}
     permissions:
       contents: read
@@ -99,7 +99,7 @@ jobs:
 
   publish_manifest:
     needs: [image_metadata, build_image]
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     permissions:
       # Required **ONLY** to create the release.
       # contents: write

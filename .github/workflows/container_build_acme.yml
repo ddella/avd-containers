@@ -30,7 +30,7 @@ jobs:
   # Name: acme-avd<avd_version>-python<python_version>, tag: <year>.<month>.<build number>
   # gh and glab versions have no leading "v", age and yq versions keep it, as the Dockerfile expects.
   image_metadata:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     permissions:
       # Read the base image's digest, also works if the package is private.
       packages: read
@@ -96,9 +96,9 @@ jobs:
       matrix:
         include:
           - arch: amd64
-            runner: ubuntu-24.04
+            runner: ubuntu-26.04
           - arch: arm64
-            runner: ubuntu-24.04-arm
+            runner: ubuntu-26.04-arm
     runs-on: ${{ matrix.runner }}
     permissions:
       contents: read
@@ -157,7 +157,7 @@ jobs:
 
   publish_manifest:
     needs: [image_metadata, build_image]
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     permissions:
       packages: write
     env:
