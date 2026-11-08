@@ -72,7 +72,7 @@ RUN if [ "$AGE_VERSION" = latest ]; then \
     && echo "Installing age ${AGE_VERSION} for ${TARGETARCH}" \
     && curl -fsSLO "https://github.com/FiloSottile/age/releases/download/${AGE_VERSION}/age-${AGE_VERSION}-linux-${TARGETARCH}.tar.gz" \
     && tar -C /usr/local/bin --strip-components=1 --no-same-owner \
-        -xzf "age-${AGE_VERSION}-linux-${TARGETARCH}.tar.gz" age/age age/age-keygen \
+        -xzf "age-${AGE_VERSION}-linux-${TARGETARCH}.tar.gz" age/age age/age-keygen age/age-inspect \
     && rm -f "age-${AGE_VERSION}-linux-${TARGETARCH}.tar.gz"
 
 # yq cli
@@ -99,7 +99,7 @@ RUN pip install --no-cache-dir --user --upgrade yamllint
 
 # Also add the certificates to certifi, for sessions without the base image's ENV
 RUN awk 1 /usr/local/share/ca-certificates/*.crt >> "$(python3 -m certifi)"
-
+-xzf "age-${AGE_VERSION}-linux-${TARGETARCH}.tar.gz" age/age age/age-keygen
 # Fix keyboard issue with vi
 COPY --chown=avd:avd vimrc /home/avd/.vimrc
 
