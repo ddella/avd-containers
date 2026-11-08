@@ -99,7 +99,6 @@ RUN pip install --no-cache-dir --user --upgrade yamllint
 
 # Also add the certificates to certifi, for sessions without the base image's ENV
 RUN awk 1 /usr/local/share/ca-certificates/*.crt >> "$(python3 -m certifi)"
--xzf "age-${AGE_VERSION}-linux-${TARGETARCH}.tar.gz" age/age age/age-keygen
 # Fix keyboard issue with vi
 COPY --chown=avd:avd vimrc /home/avd/.vimrc
 
