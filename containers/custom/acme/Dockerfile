@@ -1,4 +1,9 @@
 # ==========================================
+# ⚠️  WARNING: BUILD THIS IMAGE IN GITHUB ACTIONS OR GITLAB CI ONLY ⚠️
+# The private Root/SubRoot certificates are installed at the END of this file, after every
+# download (apt, curl, pip). Behind the firewall UTM, which inspects TLS traffic, those downloads
+# fail because the UTM certificate is not trusted yet. Do not build this image locally behind the UTM.
+# ==========================================
 # STAGE 0: Final stage
 # ==========================================
 # AVD base image. The build workflow passes the image pinned by digest (name@sha256:...),
@@ -33,19 +38,14 @@ USER root
 # pipefail, so a failed version lookup stops the build instead of giving an empty version
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-### Special Debian packages. Uncomment and replace the example packages with the ones you need.
-# RUN apt-get update \
-#     && apt-get install -y --no-install-recommends \
-#         package1 \
-#         package2 \
-#     && apt-get clean \
-#     && rm -rf /var/lib/apt/lists/*
-
-### Special Python modules
-# COPY requirements.txt /tmp/
-# RUN pip3 install --no-cache-dir --upgrade pip \
-#     && pip3 install --no-cache-dir -r /tmp/requirements.txt \
-#     && pip3 install --no-cache-dir --upgrade certifi
+### Upgrade the OS, then install special Debian packages. Replace the example packages with the ones you need.
+# The upgrade also brings the latest public root CAs from the 'ca-certificates' package.
+RUN apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get upgrade -y --no-install-recommends \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        keyutils \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 # GitLab cli. glab adds 51 MB
 RUN if [ "$GLAB_VERSION" = latest ]; then \
@@ -83,7 +83,8 @@ RUN if [ "$YQ_VERSION" = latest ]; then \
     && curl -fsSL -o /usr/local/bin/yq "https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_${TARGETARCH}" \
     && chmod +x /usr/local/bin/yq
 
-### Install Private Root/SubRoot Certificates in Ubuntu OS store
+### Install Private Root/SubRoot Certificates in Debian OS store.
+# Done after every download, see the WARNING at the top of this file.
 COPY certs/*.crt /usr/local/share/ca-certificates/
 RUN update-ca-certificates
 
@@ -97,8 +98,17 @@ USER avd
 # Install the latest 'yamllint'
 RUN pip install --no-cache-dir --user --upgrade yamllint
 
-# Also add the certificates to certifi, for sessions without the base image's ENV
+### Special Python modules, installed as 'avd' in ~/.local like AVD and its certifi in the base image.
+# Upgrading 'certifi' gets the latest public root CAs. The private certificates are added
+# to certifi just below, after every pip install.
+# COPY requirements.txt /tmp/
+# RUN pip install --no-cache-dir --user -r /tmp/requirements.txt \
+#     && pip install --no-cache-dir --user --upgrade certifi
+
+# Also add the certificates to certifi, for sessions without the base image's ENV.
+# Keep this after every pip install, upgrading 'certifi' would replace cacert.pem.
 RUN awk 1 /usr/local/share/ca-certificates/*.crt >> "$(python3 -m certifi)"
+
 # Fix keyboard issue with vi
 COPY --chown=avd:avd vimrc /home/avd/.vimrc
 
