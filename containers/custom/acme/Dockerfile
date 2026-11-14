@@ -22,6 +22,8 @@ ARG GH_VERSION=latest
 ARG GLAB_VERSION=latest
 ARG AGE_VERSION=latest
 ARG YQ_VERSION=latest
+# ARG BAO_VERSION=latest
+
 # Image version and timestamp will be set by the build workflow
 ARG IMAGE_VERSION
 ARG RFC3339_TIMESTAMP
@@ -82,6 +84,19 @@ RUN if [ "$YQ_VERSION" = latest ]; then \
     && echo "Installing yq ${YQ_VERSION} for ${TARGETARCH}" \
     && curl -fsSL -o /usr/local/bin/yq "https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_${TARGETARCH}" \
     && chmod +x /usr/local/bin/yq
+
+# OpenBao cli
+# RUN if [ "$BAO_VERSION" = latest ]; then \
+#         BAO_VERSION=$(curl -fsSL https://api.github.com/repos/openbao/openbao/releases/latest | jq -er '.tag_name'); \
+#     fi \
+#     && BAO_FILE="openbao_${BAO_VERSION#v}_linux_${TARGETARCH}.tar.gz" \
+#     && echo "Installing OpenBao CLI ${BAO_VERSION} for ${TARGETARCH}" \
+#     && curl -fsSLO "https://github.com/openbao/openbao/releases/download/${BAO_VERSION}/${BAO_FILE}" \
+#     && curl -fsSL "https://github.com/openbao/openbao/releases/download/${BAO_VERSION}/checksums.txt" \
+#         | grep " ${BAO_FILE}$" | sha256sum -c - \
+#     && tar -C /usr/local/bin --no-same-owner -xzf "${BAO_FILE}" bao \
+#     && rm -f "${BAO_FILE}" \
+#     && bao version
 
 ### Install Private Root/SubRoot Certificates in Debian OS store.
 # Done after every download, see the WARNING at the top of this file.
