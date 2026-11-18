@@ -260,6 +260,7 @@ The AVD image is meant to be used as a base. Rather than changing it, build your
 | `gh` and `glab` | GitHub and GitLab CLIs |
 | `age` and `yq` | Encrypting secrets and editing YAML from the shell |
 | `yamllint` | Checking YAML files before running playbooks |
+| `betterleaks` | Secrets scanner. |
 | The company root CA (`certs/*.crt`) | Trusted by Debian, `pip`, `requests` and `certifi`, for networks that inspect TLS |
 | `vimrc` | A working numeric keypad in `vi`, and YAML-friendly indentation |
 
