@@ -17,7 +17,7 @@ spec:
       default: "avd"
     python_version:
       description: "select Python version (of the AVD base image, for acme)"
-      options: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+      options: ["3.11", "3.12", "3.13", "3.14"]
       default: "3.14"
     avd_version:
       description: "select AVD version (of the AVD base image, for acme)"
