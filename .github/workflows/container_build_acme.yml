@@ -16,7 +16,7 @@ name: Build ACME container (native runners)
         type: choice
         required: true
         description: "select Python version of the AVD base image"
-        options: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+        options: ["3.11", "3.12", "3.13", "3.14"]
         default: "3.14"
       avd_version:
         type: choice
@@ -43,6 +43,7 @@ jobs:
       glab_version: ${{ steps.metadata.outputs.glab_version }}
       age_version: ${{ steps.metadata.outputs.age_version }}
       yq_version: ${{ steps.metadata.outputs.yq_version }}
+      BETTERLEAKS_VERSION: ${{ needs.image_metadata.outputs.betterleaks_version }}
     steps:
       - name: Login to GitHub Container Registry 🗝️
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f  # v4.6.0
@@ -83,11 +84,13 @@ jobs:
           glab_version=$(curl -fsSL https://gitlab.com/api/v4/projects/gitlab-org%2Fcli/releases/permalink/latest | jq -r '.tag_name | ltrimstr("v")')
           age_version=$(gh api repos/FiloSottile/age/releases/latest --jq '.tag_name')
           yq_version=$(gh api repos/mikefarah/yq/releases/latest --jq '.tag_name')
+          betterleaks_version=$(curl -fsSL https://api.github.com/repos/betterleaks/betterleaks/releases/latest | jq -er '.tag_name | ltrimstr("v")')
           {
             echo "gh_version=$gh_version"
             echo "glab_version=$glab_version"
             echo "age_version=$age_version"
             echo "yq_version=$yq_version"
+            echo "betterleaks_version=$betterleaks_version"
           } | tee -a "$GITHUB_OUTPUT"
 
   build_image:
@@ -112,6 +115,8 @@ jobs:
       GLAB_VERSION: ${{ needs.image_metadata.outputs.glab_version }}
       AGE_VERSION: ${{ needs.image_metadata.outputs.age_version }}
       YQ_VERSION: ${{ needs.image_metadata.outputs.yq_version }}
+      BETTERLEAKS_VERSION: ${{ needs.image_metadata.outputs.betterleaks_version }}
+      
       BUILDX_NO_DEFAULT_ATTESTATIONS: 1
       ARCH: ${{ matrix.arch }}
     steps:
@@ -142,6 +147,7 @@ jobs:
             --build-arg "GLAB_VERSION=$GLAB_VERSION" \
             --build-arg "AGE_VERSION=$AGE_VERSION" \
             --build-arg "YQ_VERSION=$YQ_VERSION" \
+            --build-arg "BETTERLEAKS_VERSION=$BETTERLEAKS_VERSION" \
             --build-arg "RFC3339_TIMESTAMP=$RFC3339_TIMESTAMP" \
             --label "org.opencontainers.image.source=https://github.com/$GITHUB_REPOSITORY" \
             --tag "$IMAGE_NAME:$IMAGE_TAG-$ARCH" \

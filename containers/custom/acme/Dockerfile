@@ -103,10 +103,20 @@ RUN if [ "$YQ_VERSION" = latest ]; then \
 RUN if [ "$BETTERLEAKS_VERSION" = latest ]; then \
         BETTERLEAKS_VERSION=$(curl -fsSL https://api.github.com/repos/betterleaks/betterleaks/releases/latest | jq -er '.tag_name | ltrimstr("v")'); \
     fi \
-    && echo "Installing BetterLeaks v${BETTERLEAKS_VERSION} for ${TARGETARCH}" \
-    && curl -fsSLO "https://github.com/betterleaks/betterleaks/releases/download/v${BETTERLEAKS_VERSION}/betterleaks_${BETTERLEAKS_VERSION}_linux_${TARGETARCH}.tar.gz" \
-    && tar -C /usr/local/bin --no-same-owner -xzf "betterleaks_${BETTERLEAKS_VERSION}_linux_${TARGETARCH}.tar.gz" betterleaks \
-    && rm -f "betterleaks_${BETTERLEAKS_VERSION}_linux_${TARGETARCH}.tar.gz"
+    && DL_ARCH=$TARGETARCH \
+    && if [ "$TARGETARCH" = "amd64" ]; then DL_ARCH="x64"; fi \
+    && echo "Installing BetterLeaks v${BETTERLEAKS_VERSION} for ${TARGETARCH} (fetching ${DL_ARCH})" \
+    && curl -fsSLO "https://github.com/betterleaks/betterleaks/releases/download/v${BETTERLEAKS_VERSION}/betterleaks_${BETTERLEAKS_VERSION}_linux_${DL_ARCH}.tar.gz" \
+    && tar -C /usr/local/bin --no-same-owner -xzf "betterleaks_${BETTERLEAKS_VERSION}_linux_${DL_ARCH}.tar.gz" betterleaks \
+    && rm -f "betterleaks_${BETTERLEAKS_VERSION}_linux_${DL_ARCH}.tar.gz"
+
+# RUN if [ "$BETTERLEAKS_VERSION" = latest ]; then \
+#         BETTERLEAKS_VERSION=$(curl -fsSL https://api.github.com/repos/betterleaks/betterleaks/releases/latest | jq -er '.tag_name | ltrimstr("v")'); \
+#     fi \
+#     && echo "Installing BetterLeaks v${BETTERLEAKS_VERSION} for ${TARGETARCH}" \
+#     && curl -fsSLO "https://github.com/betterleaks/betterleaks/releases/download/v${BETTERLEAKS_VERSION}/betterleaks_${BETTERLEAKS_VERSION}_linux_${TARGETARCH}.tar.gz" \
+#     && tar -C /usr/local/bin --no-same-owner -xzf "betterleaks_${BETTERLEAKS_VERSION}_linux_${TARGETARCH}.tar.gz" betterleaks \
+#     && rm -f "betterleaks_${BETTERLEAKS_VERSION}_linux_${TARGETARCH}.tar.gz"
 
 ### Install Private Root/SubRoot Certificates in Debian OS store.
 # Done after every download, see the WARNING at the top of this file.
