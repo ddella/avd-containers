@@ -43,7 +43,7 @@ jobs:
       glab_version: ${{ steps.metadata.outputs.glab_version }}
       age_version: ${{ steps.metadata.outputs.age_version }}
       yq_version: ${{ steps.metadata.outputs.yq_version }}
-      betterleaks_version: ${{ needs.image_metadata.outputs.betterleaks_version }}
+      betterleaks_version: ${{ steps.metadata.outputs.betterleaks_version }}
     steps:
       - name: Login to GitHub Container Registry 🗝️
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f  # v4.6.0
