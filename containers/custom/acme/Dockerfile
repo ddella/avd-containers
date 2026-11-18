@@ -68,7 +68,7 @@ RUN if [ "$GH_VERSION" = latest ]; then \
     && dpkg -i "gh_${GH_VERSION}_linux_${TARGETARCH}.deb" \
     && rm -f "gh_${GH_VERSION}_linux_${TARGETARCH}.deb"
 
-# age encryption cli
+# age encryption cli adds 15 MB
 RUN if [ "$AGE_VERSION" = latest ]; then \
         AGE_VERSION=$(curl -fsSL https://api.github.com/repos/FiloSottile/age/releases/latest | jq -er '.tag_name'); \
     fi \
@@ -78,7 +78,7 @@ RUN if [ "$AGE_VERSION" = latest ]; then \
         -xzf "age-${AGE_VERSION}-linux-${TARGETARCH}.tar.gz" age/age age/age-keygen age/age-inspect \
     && rm -f "age-${AGE_VERSION}-linux-${TARGETARCH}.tar.gz"
 
-# yq cli
+# yq cli adds 16 MB
 RUN if [ "$YQ_VERSION" = latest ]; then \
         YQ_VERSION=$(curl -fsSL https://api.github.com/repos/mikefarah/yq/releases/latest | jq -er '.tag_name'); \
     fi \
@@ -99,7 +99,7 @@ RUN if [ "$YQ_VERSION" = latest ]; then \
 #     && rm -f "${BAO_FILE}" \
 #     && bao version
 
-# Betterleaks. Adds 25 Mb
+# Betterleaks adds 25 Mb
 RUN if [ "$BETTERLEAKS_VERSION" = latest ]; then \
         BETTERLEAKS_VERSION=$(curl -fsSL https://api.github.com/repos/betterleaks/betterleaks/releases/latest | jq -er '.tag_name | ltrimstr("v")'); \
     fi \

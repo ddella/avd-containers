@@ -9,8 +9,12 @@ covers it.
 */
 {
 "name": "ACME NetDevOps AVD SANDBOX Lab",
-  "image": "ghcr.io/ddella/avd-containers/acme-avd6.5.0-python3.14:latest",
-  "initializeCommand": "docker pull ghcr.io/ddella/avd-containers/acme-avd6.5.0-python3.14:latest",
+  // 👉GitHub registry👈
+  // "image": "ghcr.io/ddella/avd-containers/acme-avd6.5.0-python3.14:latest",
+  // "initializeCommand": "docker pull ghcr.io/ddella/avd-containers/acme-avd6.5.0-python3.14:latest",
+  // 👉GitLab registry👈
+  "image": "registry.gitlab.com/ddella/avd-containers/acme-avd6.5.0-python3.14:latest",
+  "initializeCommand": "docker pull registry.gitlab.com/ddella/avd-containers/acme-avd6.5.0-python3.14:latest",
   "features": {
     "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
       "version": "latest",

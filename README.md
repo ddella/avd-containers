@@ -67,9 +67,13 @@ arista.avd        6.5.0
 Pull the [ACME image](#customising-the-image-the-acme-example) and print the same versions, plus the tools it adds:
 
 ```bash
+# GitHub
 docker pull ghcr.io/ddella/avd-containers/acme-avd6.5.0-python3.14:latest
+# GitLab
+# docker pull registry.gitlab.com/ddella/avd-containers/acme-avd6.5.0-python3.14:latest
+
 docker run --rm ghcr.io/ddella/avd-containers/acme-avd6.5.0-python3.14:latest \
-  sh -c 'grep PRETTY_NAME /etc/os-release; grep DEBIAN_VERSION_FULL /etc/os-release; python --version; ansible-galaxy collection list | grep arista.avd; gh --version | head -1; glab --version; age --version; yq --version'
+  sh -c 'grep PRETTY_NAME /etc/os-release; grep DEBIAN_VERSION_FULL /etc/os-release; python --version; ansible-galaxy collection list | grep arista.avd; gh --version | head -1; glab --version; age --version; yq --version; betterleaks --version;'
 ```
 
 Output:
@@ -93,13 +97,13 @@ To test another combination, change `avd6.5.0-python3.14` in both commands, for 
 | Component | Version |
 |---|---|
 | Debian | 13 (trixie), slim |
-| Python | 3.10 to 3.14, depending on the image |
+| Python | 3.11 to 3.14, depending on the image |
 | `pyavd` with Ansible extras | Matches the image's AVD version |
 | `arista.avd` collection | 6.3.0, 6.4.0 or 6.5.0 |
 | `arista.eos` collection | 12.3.0 |
 | `ansible.netcommon` collection | 8.7.1 |
 | `ansible.utils` collection | 6.1.1 |
-| `ansible-core` | 2.21 |
+| `ansible-core` | 2.21.6 |
 
 Only `arista.avd` is installed directly. The other collections come in as its dependencies, as declared in each collection's `galaxy.yml`:
 
