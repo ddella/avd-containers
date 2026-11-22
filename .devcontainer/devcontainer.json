@@ -7,6 +7,7 @@ When you bump the version, update all 3. A find-and-replace on 'acme-avd6.5.0-py
 covers it.
 
 */
+
 {
 "name": "ACME NetDevOps AVD SANDBOX Lab",
   // 👉GitHub registry👈

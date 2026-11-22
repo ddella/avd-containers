@@ -1,3 +1,6 @@
+# Use the following command to see which ignore rule is causing it.
+#   git check-ignore -v <file_or_directory>
+
 # -------------------------
 # OS / Filesystem Junk
 # -------------------------
