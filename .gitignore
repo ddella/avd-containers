@@ -117,7 +117,7 @@ ENV/
 # Ignore personal devcontainer overrides
 # -------------------------
 # .devcontainer/setup.sh
-# .devcontainer/devcontainer-lock.json
+.devcontainer/devcontainer-lock.json
 # .devcontainer/devcontainer.json
 
 #----------------------------------
