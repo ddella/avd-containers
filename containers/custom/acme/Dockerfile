@@ -44,7 +44,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get upgrade -y --no-install-recommends \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-    && keyutils \
+        keyutils \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
