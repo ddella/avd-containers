@@ -91,12 +91,22 @@ RUN git clone --depth 1 https://github.com/ohmyzsh/ohmyzsh.git ~/.oh-my-zsh \
         "zstyle ':omz:update' mode disabled" 'source $ZSH/oh-my-zsh.sh' > ~/.zshrc \
     && echo 'source $HOME/.profile' > ~/.zprofile \
     && pip install --no-cache-dir "pyavd[ansible] @ git+https://github.com/aristanetworks/avd.git@${AVD_VERSION}#subdirectory=python-avd" \
-    && ansible-galaxy collection install "git+https://github.com/aristanetworks/avd.git#/ansible_collections/arista/avd/,${AVD_VERSION}" \
     && pip install --no-cache-dir --upgrade certifi \
-    && rm -rf ~/.cache ~/.ansible/galaxy_cache \
-        ~/.ansible/collections/ansible_collections/*/*/tests \
+    && rm -rf ~/.cache \
         ~/.local/lib/python3*/site-packages/ansible_test \
         ~/.local/bin/ansible-test
+
+# Galaxy downloads sometimes fail with "connection reset", so retry up to 3 times
+RUN for i in 1 2 3; do \
+        ansible-galaxy collection install \
+            "git+https://github.com/aristanetworks/avd.git#/ansible_collections/arista/avd/,${AVD_VERSION}" \
+            && break; \
+        [ "$i" -eq 3 ] && exit 1; \
+        echo "ansible-galaxy failed (attempt $i), retrying in 15s..." >&2; \
+        sleep 15; \
+    done \
+    && rm -rf ~/.ansible/galaxy_cache \
+        ~/.ansible/collections/ansible_collections/*/*/tests
 
 # Add the prompt theme from the devcontainers common-utils feature.
 COPY --chown=avd:avd ./devcontainers.zsh-theme /home/avd/.oh-my-zsh/custom/themes/devcontainers.zsh-theme
