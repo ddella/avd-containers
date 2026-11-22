@@ -79,18 +79,24 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          echo "image_tag=$(date -u +%Y.%m).$GITHUB_RUN_NUMBER" >> "$GITHUB_OUTPUT"
-          gh_version=$(gh api repos/cli/cli/releases/latest --jq '.tag_name | ltrimstr("v")')
-          glab_version=$(curl -fsSL https://gitlab.com/api/v4/projects/gitlab-org%2Fcli/releases/permalink/latest | jq -r '.tag_name | ltrimstr("v")')
-          age_version=$(gh api repos/FiloSottile/age/releases/latest --jq '.tag_name')
-          yq_version=$(gh api repos/mikefarah/yq/releases/latest --jq '.tag_name')
-          betterleaks_version=$(gh api repos/betterleaks/betterleaks/releases/latest --jq '.tag_name | ltrimstr("v")')
+          latest_tag() { gh api "repos/$1/releases/latest" --jq '.tag_name'; }
+          glab_api="https://gitlab.com/api/v4/projects/gitlab-org%2Fcli"
+
+          image_tag="$(date -u +%Y.%m).$GITHUB_RUN_NUMBER"
+          echo "image_tag=$image_tag" >> "$GITHUB_OUTPUT"
+
+          gh_version=$(latest_tag cli/cli)
+          glab_version=$(curl -fsSL "${glab_api}/releases/permalink/latest" \
+            | jq -er '.tag_name')
+          age_version=$(latest_tag FiloSottile/age)
+          yq_version=$(latest_tag mikefarah/yq)
+          betterleaks_version=$(latest_tag betterleaks/betterleaks)
           {
-            echo "gh_version=$gh_version"
-            echo "glab_version=$glab_version"
+            echo "gh_version=${gh_version#v}"
+            echo "glab_version=${glab_version#v}"
             echo "age_version=$age_version"
             echo "yq_version=$yq_version"
-            echo "betterleaks_version=$betterleaks_version"
+            echo "betterleaks_version=${betterleaks_version#v}"
           } | tee -a "$GITHUB_OUTPUT"
 
   build_image:
@@ -116,7 +122,7 @@ jobs:
       AGE_VERSION: ${{ needs.image_metadata.outputs.age_version }}
       YQ_VERSION: ${{ needs.image_metadata.outputs.yq_version }}
       BETTERLEAKS_VERSION: ${{ needs.image_metadata.outputs.betterleaks_version }}
-      
+
       BUILDX_NO_DEFAULT_ATTESTATIONS: 1
       ARCH: ${{ matrix.arch }}
     steps:
@@ -154,9 +160,11 @@ jobs:
             containers/custom/acme
 
       - name: Check image 🔍
-        run: |
-          docker run --rm "$IMAGE_NAME:$IMAGE_TAG-$ARCH" \
-            sh -c 'whoami; uname -m; gh --version | head -1; glab --version; age --version; yq --version; yamllint --version; ls /usr/local/share/ca-certificates; ansible-galaxy collection list arista.avd'
+        run: >-
+          docker run --rm "$IMAGE_NAME:$IMAGE_TAG-$ARCH"
+          sh -c 'whoami; uname -m; gh --version | head -1; glab --version;
+          age --version; yq --version; yamllint --version;
+          ls /usr/local/share/ca-certificates; ansible-galaxy collection list arista.avd'
 
       - name: Push image 🚀
         run: docker push "$IMAGE_NAME:$IMAGE_TAG-$ARCH"

@@ -25,7 +25,9 @@ spec:
       default: "v6.5.0"
 ---
 workflow:
-  name: "Build $[[ inputs.image ]] container (native runners) - AVD $[[ inputs.avd_version ]], Python $[[ inputs.python_version ]]"
+  name: >-
+    Build $[[ inputs.image ]] container (native runners) - AVD $[[ inputs.avd_version ]],
+    Python $[[ inputs.python_version ]]
   rules:
     # Manual runs only, like workflow_dispatch: "web" is the GUI, "api" is glab ci run.
     - if: $CI_PIPELINE_SOURCE == "web"

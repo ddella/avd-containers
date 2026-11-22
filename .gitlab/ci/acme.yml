@@ -37,13 +37,17 @@ acme_metadata:
     # API token, so it isn't hit by the API rate limit that GitLab's shared runner IPs often reach.
     - |
       github_latest() {
-        curl -fsSLI -o /dev/null -w '%{url_effective}' "https://github.com/$1/releases/latest" | sed 's|.*/tag/||'
+        curl -fsSLI -o /dev/null -w '%{url_effective}' \
+          "https://github.com/$1/releases/latest" | sed 's|.*/tag/||'
       }
+    - GLAB_API="https://gitlab.com/api/v4/projects/gitlab-org%2Fcli"
     - GH_VERSION=$(github_latest cli/cli | sed 's/^v//')
-    - GLAB_VERSION=$(curl -fsSL https://gitlab.com/api/v4/projects/gitlab-org%2Fcli/releases/permalink/latest | jq -r '.tag_name | ltrimstr("v")')
+    - |
+      GLAB_VERSION=$(curl -fsSL "$GLAB_API/releases/permalink/latest" \
+        | jq -er '.tag_name | ltrimstr("v")')
     - AGE_VERSION=$(github_latest FiloSottile/age)
     - YQ_VERSION=$(github_latest mikefarah/yq)
-    - BETTERLEAKS_VERSION=$(curl -fsSL https://api.github.com/repos/betterleaks/betterleaks/releases/latest | jq -er '.tag_name | ltrimstr("v")')
+    - BETTERLEAKS_VERSION=$(github_latest betterleaks/betterleaks | sed 's/^v//')
     - |
       {
         echo "IMAGE_NAME=$CI_REGISTRY_IMAGE/acme-$suffix"
@@ -54,6 +58,7 @@ acme_metadata:
         echo "GLAB_VERSION=$GLAB_VERSION"
         echo "AGE_VERSION=$AGE_VERSION"
         echo "YQ_VERSION=$YQ_VERSION"
+        echo "BETTERLEAKS_VERSION=$BETTERLEAKS_VERSION"
       } > image.env
     - cat image.env
     # An empty value means a lookup failed: stop here instead of building with a missing version.
@@ -87,9 +92,11 @@ acme_build:
         --label "org.opencontainers.image.source=$CI_PROJECT_URL" \
         --tag "$IMAGE_NAME:$IMAGE_TAG-$ARCH" \
         containers/custom/acme
-    - |
-      docker run --rm "$IMAGE_NAME:$IMAGE_TAG-$ARCH" \
-        sh -c 'whoami; uname -m; gh --version | head -1; glab --version; age --version; yq --version; yamllint --version; ls /usr/local/share/ca-certificates; ansible-galaxy collection list arista.avd'
+    - >-
+      docker run --rm "$IMAGE_NAME:$IMAGE_TAG-$ARCH"
+      sh -c 'whoami; uname -m; gh --version | head -1; glab --version;
+      age --version; yq --version; yamllint --version; ls /usr/local/share/ca-certificates;
+      ansible-galaxy collection list arista.avd'
     - docker push "$IMAGE_NAME:$IMAGE_TAG-$ARCH"
 
 acme_publish:
