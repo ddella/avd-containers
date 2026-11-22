@@ -82,6 +82,8 @@ RUN chmod +x /bin/entrypoint.sh /usr/local/share/ssh-init.sh \
 USER avd
 
 # Install Oh My Zsh with only the git plugin, then the Ansible AVD collection.
+# 👉 Do NOT remove the line below 👈
+# hadolint ignore=SC2016
 RUN git clone --depth 1 https://github.com/ohmyzsh/ohmyzsh.git ~/.oh-my-zsh \
     && rm -rf ~/.oh-my-zsh/.git \
     && find ~/.oh-my-zsh/plugins -mindepth 1 -maxdepth 1 ! -name git -exec rm -rf {} + \
