@@ -123,10 +123,6 @@ ENV/
 #----------------------------------
 # Overrides
 #----------------------------------
-!ansible-Vault-secrets-*.yml
-scripts/perso_ssh_key.txt
-host.csv
-host_records.csv
 
 #----------------------------------
 # Personal .gitignore
