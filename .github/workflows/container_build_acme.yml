@@ -84,7 +84,7 @@ jobs:
           glab_version=$(curl -fsSL https://gitlab.com/api/v4/projects/gitlab-org%2Fcli/releases/permalink/latest | jq -r '.tag_name | ltrimstr("v")')
           age_version=$(gh api repos/FiloSottile/age/releases/latest --jq '.tag_name')
           yq_version=$(gh api repos/mikefarah/yq/releases/latest --jq '.tag_name')
-          betterleaks_version=$(curl -fsSL https://api.github.com/repos/betterleaks/betterleaks/releases/latest | jq -er '.tag_name | ltrimstr("v")')
+          betterleaks_version=$(gh api repos/betterleaks/betterleaks/releases/latest --jq '.tag_name | ltrimstr("v")')
           {
             echo "gh_version=$gh_version"
             echo "glab_version=$glab_version"
