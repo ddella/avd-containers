@@ -1,0 +1,135 @@
+# -------------------------
+# OS / Filesystem Junk
+# -------------------------
+# find . -name ".DS_Store" -exec git rm --cached {} +
+**/.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# -------------------------
+# Sensitive / Security
+# -------------------------
+*.key
+*.crt
+*.tok
+*.token
+*.secret
+*.env
+.env.*
+.secrets/*
+!.secrets/.gitkeep
+credentials/
+secret.yml
+*vault*
+*.age
+
+# -------------------------
+# Backup / Temp Files
+# -------------------------
+*.bak
+*.tmp
+*.swp
+*.swo
+*.orig
+*.old
+*~
+*.lock
+
+# -------------------------
+# Python
+# -------------------------
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pdb
+*.egg-info/
+.eggs/
+build/
+dist/
+pip-wheel-metadata/
+.venv/
+venv/
+env/
+
+# -------------------------
+# Logs
+# -------------------------
+*.log
+logs/
+log/
+
+# -------------------------
+# IDE / Editor Noise
+# -------------------------
+# VSCode
+.vscode/
+
+# PyCharm / IntelliJ
+.idea/
+
+# -------------------------
+# VIM
+# -------------------------
+*.vim
+*.swp
+*.swo
+
+# -------------------------
+# Git
+# -------------------------
+.gitignore~
+
+# -------------------------
+# AVD Snapshots
+# -------------------------
+# Ignore these generated directories at the repository root and at any depth.
+**/documentation/
+**/intended/
+**/snapshots/
+**/anta/
+**/digital_twin/
+Markdown/
+config_backup/
+old/
+
+# -------------------------
+# GitLab Artifacts
+# -------------------------
+artifacts.zip
+
+# -------------------------
+# Environments
+# -------------------------
+.env
+.venv
+env/
+venv/
+ENV/
+.vscode
+*.tar.gz
+
+# -------------------------
+# Ignore personal devcontainer overrides
+# -------------------------
+# .devcontainer/setup.sh
+# .devcontainer/devcontainer-lock.json
+# .devcontainer/devcontainer.json
+
+#----------------------------------
+# Overrides
+#----------------------------------
+!ansible-Vault-secrets-*.yml
+scripts/perso_ssh_key.txt
+host.csv
+host_records.csv
+
+#----------------------------------
+# Personal .gitignore
+#----------------------------------
+# Put personal rules in this clone's '.git/info/exclude'. Git reads it, but it isn’t committed or replaced by pulls.
+# For ignore rules you want across all your repos, use a global ignore file instead:
+#   'git config --global core.excludesFile ~/.config/git/ignore'
+
+**/Docs
