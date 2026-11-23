@@ -122,7 +122,7 @@ RUN if [ "$YQ_VERSION" = latest ]; then \
 #     && BASE_URL="https://github.com/openbao/openbao/releases/download/${BAO_VERSION}" \
 #     && echo "Installing OpenBao CLI ${BAO_VERSION} for ${TARGETARCH}" \
 #     && curl -fsSLO "${BASE_URL}/${BAO_FILE}" \
-#     && curl -fsSL "${BASE_URL}/checksums.txt" | grep " ${BAO_FILE}$" | sha256sum -c - \
+#     && curl -fsSL "${BASE_URL}/checksums.txt" | awk -v file="${BAO_FILE}" '$2 == file' | sha256sum -c - \
 #     && tar -C /usr/local/bin --no-same-owner -xzf "${BAO_FILE}" bao \
 #     && rm -f "${BAO_FILE}" \
 #     && bao version
