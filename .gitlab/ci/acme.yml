@@ -75,7 +75,7 @@ acme_build:
   extends: [.native_build, .acme_rules]
   needs: [acme_metadata]
   script:
-    # RFC 3339 timestamp for the com.acme.image.created label (busybox date has no --rfc-3339).
+    # RFC 3339 timestamp for the *.image.created labels and AVD_BUILD_DATE (busybox date has no --rfc-3339).
     - RFC3339_TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
     - |
       docker build \
@@ -88,7 +88,11 @@ acme_build:
         --build-arg "GLAB_VERSION=$GLAB_VERSION" \
         --build-arg "AGE_VERSION=$AGE_VERSION" \
         --build-arg "YQ_VERSION=$YQ_VERSION" \
+        --build-arg "BETTERLEAKS_VERSION=$BETTERLEAKS_VERSION" \
         --build-arg "RFC3339_TIMESTAMP=$RFC3339_TIMESTAMP" \
+        --build-arg "AVD_PYTHON_VERSION=$PYTHON_VERSION" \
+        --build-arg "AVD_VERSION=$AVD_VERSION" \
+        --build-arg "IMAGE_NAME=$IMAGE_NAME" \
         --label "org.opencontainers.image.source=$CI_PROJECT_URL" \
         --tag "$IMAGE_NAME:$IMAGE_TAG-$ARCH" \
         containers/custom/acme

@@ -156,6 +156,18 @@ RUN update-ca-certificates
 ENV REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
 ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 
+# Image metadata, available inside the container. Set late, since these values change on every build.
+ARG AVD_PYTHON_VERSION
+ARG AVD_VERSION
+ARG IMAGE_NAME
+LABEL org.opencontainers.image.created=${RFC3339_TIMESTAMP}
+ENV AVD_PYTHON_VERSION=${AVD_PYTHON_VERSION} \
+    AVD_VERSION=${AVD_VERSION} \
+    AVD_BUILD_DATE=${RFC3339_TIMESTAMP} \
+    AVD_IMAGE_TAG=${IMAGE_VERSION} \
+    AVD_ARCH=${TARGETARCH} \
+    AVD_IMAGE_NAME=${IMAGE_NAME}
+
 # Switch back to the AVD base image's 'avd' user
 USER avd
 

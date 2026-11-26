@@ -122,6 +122,8 @@ jobs:
       AGE_VERSION: ${{ needs.image_metadata.outputs.age_version }}
       YQ_VERSION: ${{ needs.image_metadata.outputs.yq_version }}
       BETTERLEAKS_VERSION: ${{ needs.image_metadata.outputs.betterleaks_version }}
+      AVD_PYTHON_VERSION: ${{ inputs.python_version }}
+      AVD_VERSION: ${{ inputs.avd_version }}
 
       BUILDX_NO_DEFAULT_ATTESTATIONS: 1
       ARCH: ${{ matrix.arch }}
@@ -138,8 +140,8 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Get RFC3339 timestamp for com.acme.image.created label ⌚
-        run: echo "RFC3339_TIMESTAMP=$(date --rfc-3339=seconds)" >> "$GITHUB_ENV"
+      - name: Get RFC3339 timestamp for the image.created labels and AVD_BUILD_DATE ⌚
+        run: echo "RFC3339_TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"
 
       - name: Build image 🔨
         run: |
@@ -155,6 +157,9 @@ jobs:
             --build-arg "YQ_VERSION=$YQ_VERSION" \
             --build-arg "BETTERLEAKS_VERSION=$BETTERLEAKS_VERSION" \
             --build-arg "RFC3339_TIMESTAMP=$RFC3339_TIMESTAMP" \
+            --build-arg "AVD_PYTHON_VERSION=$AVD_PYTHON_VERSION" \
+            --build-arg "AVD_VERSION=$AVD_VERSION" \
+            --build-arg "IMAGE_NAME=$IMAGE_NAME" \
             --label "org.opencontainers.image.source=https://github.com/$GITHUB_REPOSITORY" \
             --tag "$IMAGE_NAME:$IMAGE_TAG-$ARCH" \
             containers/custom/acme

@@ -75,7 +75,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Get RFC3339 timestamp for org.opencontainers.image.created label ⌚
-        run: echo "RFC3339_TIMESTAMP=$(date --rfc-3339=seconds)" >> "$GITHUB_ENV"
+        run: echo "RFC3339_TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"
 
       - name: Build image 🔨
         run: |
