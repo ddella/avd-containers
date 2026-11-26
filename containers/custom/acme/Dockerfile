@@ -159,6 +159,15 @@ ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 # Switch back to the AVD base image's 'avd' user
 USER avd
 
+COPY --chown=avd:avd git-prompt.sh git-prompt.zsh /home/avd/
+RUN mv ~/git-prompt.sh ~/.git-prompt.sh \
+    && curl -fsSL --retry 3 --max-time 30 \
+    https://raw.githubusercontent.com/git/git/master/contrib/completion/git-prompt.sh \
+    -o /tmp/git-prompt.sh \
+    && mv /tmp/git-prompt.sh ~/.git-prompt.sh \
+    || echo "git-prompt.sh download failed, using bundled copy"
+RUN echo 'source ~/git-prompt.zsh' >> ~/.zshrc
+
 # Install the latest 'yamllint'
 RUN pip install --no-cache-dir --user --upgrade yamllint
 

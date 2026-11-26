@@ -383,6 +383,80 @@ docker run --rm -v "$PWD":/repo:ro -w /repo rhysd/actionlint:1.7.7 -no-color \
 
 Drop `-no-color` to get colored output in a terminal.
 
+---
+
+# Prompt
+
+## Download
+Download the script to get a nice "git prompt"
+
+```bash
+curl -LO https://raw.githubusercontent.com/git/git/master/contrib/completion/git-prompt.sh
+```
+
+`git-prompt.sh` isn't a program, so it doesn't need to be executable.
+
+## `~/.zshrc`
+
+Add this to the end of `~/.zshrc`:
+
+```zsh
+# --- Git prompt ---
+source ~/.git-prompt.sh
+
+GIT_PS1_SHOWDIRTYSTATE=1        # * = modified (unstaged), + = staged
+GIT_PS1_SHOWUNTRACKEDFILES=1    # % = new, untracked files
+GIT_PS1_SHOWSTASHSTATE=1        # $ = something is stashed
+GIT_PS1_SHOWUPSTREAM="auto"     # = pushed/in sync, > unpushed, < behind, <> diverged
+GIT_PS1_SHOWCOLORHINTS=1        # color the branch and indicators
+GIT_PS1_DESCRIBE_STYLE="branch"
+
+autoload -Uz add-zsh-hook
+# _set_git_prompt() { __git_ps1 "%F{cyan}%n@%m%f %F{blue}%~%f" " %# " " (%s)" }
+_set_git_prompt() { __git_ps1 "%F{green}%n%f %B%(?.%F{green}.%F{red})➜%f%b %B%F{blue}%~%f%b" " $ " " (%s)" }
+add-zsh-hook precmd _set_git_prompt
+```
+
+The prompt should now look like this:
+
+```
+avd ➜ /workspaces/avd-containers (main =) $
+```
+
+Here's how each part of the line maps to the prompt:
+- `%n` is the user name (`avd`), shown in green.
+- `%(?.%F{green}.%F{red})➜` makes the arrow green when the last command succeeded and red when it failed, like the original theme.
+- `%~` is the current folder, in bold blue.
+- `" $ "` puts back `$` where the new setup had `%`.
+- `" (%s)"` is the git part, which now includes the `=`, `*`, `+` and `%` indicators.
+
+To have the `user@host` style, add `@%m` after `%n`.
+
+## Reload `~/.zshrc`
+
+Reload it with `source ~/.zshrc` and `cd` into a repo.
+
+### Reading the prompt
+
+| Prompt | Meaning |
+|---|---|
+| `(main %)` | new untracked files |
+| `(main *)` | tracked files modified, not staged |
+| `(main +)` | changes staged, not committed |
+| `(main *+)` | some staged, some still unstaged |
+| `(main >)` | committed but **not pushed** |
+| `(main =)` | clean and in sync with remote (pushed) |
+| `(main <)` | remote has commits you haven't pulled |
+| `(main <>)` | diverged |
+
+For the number of unpushed commits instead of just the arrow, use `GIT_PS1_SHOWUPSTREAM="auto verbose"`. That shows `u+2` for two unpushed commits and `u-1` for one you're behind.
+
+The pushed indicators compare against the remote as of your last `fetch`, `pull` or `push`. The prompt doesn't contact the server.
+
+If you use Oh My Zsh or another prompt theme, it may overwrite `PS1`. Set `ZSH_THEME=""` so this prompt takes effect.
+
+---
+
 ## License
 
 [Apache-2.0](https://github.com/ddella/avd-containers/blob/main/LICENSE), the same license as AVD.
