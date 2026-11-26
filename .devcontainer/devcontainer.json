@@ -3,8 +3,8 @@ https://containers.dev/implementors/json_reference/
 
 ⚠️ If you need to change the "image" name ⚠️
 Keeping the image name in sync: it now appears in 3 places in the same file.
-When you bump the version, update all 3. A find-and-replace on 'acme-avd6.5.0-python3.14'
-covers it.
+When you bump the version, update all 3. A find-and-replace on the value of
+  key 👉 "image"
 
 */
 
@@ -41,7 +41,7 @@ covers it.
     // AGE private key, available to every process (not only zsh)
     "AGE_PRIVATE_KEY": "/home/avd/.ssh/id_ed25519_avd",
     // Read by check-update.sh. ⚠️ Keep in sync with "image" and "initializeCommand"
-    "DEVCONTAINER_IMAGE": "ghcr.io/ddella/avd-containers/acme-avd6.5.0-python3.14:latest"
+    "DEVCONTAINER_IMAGE": "registry.gitlab.com/ddella/avd-containers/acme-avd6.5.0-python3.14:latest"
   },
 
   // tells the container to share the kernel's hostname namespace with your local machine

@@ -25,17 +25,5 @@
 
 git config --global devcontainers-theme.show-dirty 1
 
-# Add the 'avd' user to the 'docker' group
-# ⛔⛔⛔ DON'T DO THAT ⛔⛔⛔
-# Get the GID of the 'avd' group
-# AVD_GID=$(getent group avd | cut -d: -f3)
-# echo "The GID of group avd is: $AVD_GID"
-
-# SOCK_GID=$(stat -c "%g" /var/run/docker.sock)
-# echo "The GID is: $SOCK_GID"
-# sudo groupadd -g $SOCK_GID docker
-# sudo groupmod -g $AVD_GID docker
-# sudo usermod -aG docker $USER
-# sudo newgrp docker
 
 exit 0
