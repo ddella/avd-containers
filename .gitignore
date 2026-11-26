@@ -14,7 +14,7 @@ Desktop.ini
 # Sensitive / Security
 # -------------------------
 *.key
-*.crt
+# *.crt
 *.tok
 *.token
 *.secret
